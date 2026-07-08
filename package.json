@@ -1,0 +1,14 @@
+{
+  "name": "scrum-poker-server",
+  "version": "1.0.0",
+  "description": "Real-time Scrum Poker server and client dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.16.0"
+  },
+  "private": true
+}
