@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrum Poker - Premium Agile Estimation</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Glow Accents -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="app-container">
+
+    <!-- LANDING SCREEN -->
+    <section id="screen-landing" class="screen screen-landing">
+      <div class="landing-card glass">
+        <header class="landing-header">
+          <div class="logo">
+            <span class="logo-icon">🃏</span>
+            <h1>Scrum Poker</h1>
+          </div>
+          <p class="subtitle">Estimate user stories efficiently with your team, anywhere.</p>
+        </header>
+
+        <div class="tabs-control">
+          <button id="tab-create" class="tab-btn active">Create Room</button>
+          <button id="tab-join" class="tab-btn">Join Room</button>
+        </div>
+
+        <!-- Create Room Form -->
+        <form id="form-create-room" class="landing-form">
+          <div class="input-group">
+            <label for="create-name">Your Name</label>
+            <input type="text" id="create-name" placeholder="e.g. Sarah" required autocomplete="off">
+          </div>
+          <div class="input-group">
+            <label for="create-deck">Card Deck</label>
+            <select id="create-deck">
+              <option value="fibonacci">Fibonacci (0, 1, 2, 3, 5, 8, 13, 21...)</option>
+              <option value="tshirt">T-Shirt Sizes (XS, S, M, L, XL, XXL)</option>
+            </select>
+          </div>
+          <div class="input-group checkbox-group">
+            <label>Your Role</label>
+            <div class="radio-options">
+              <label class="radio-label">
+                <input type="radio" name="create-role" value="estimator" checked>
+                <span class="radio-custom"></span> Estimator
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="create-role" value="spectator">
+                <span class="radio-custom"></span> Spectator
+              </label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-glow">Create Room</button>
+        </form>
+
+        <!-- Join Room Form -->
+        <form id="form-join-room" class="landing-form hidden">
+          <div class="input-group">
+            <label for="join-name">Your Name</label>
+            <input type="text" id="join-name" placeholder="e.g. Sarah" required autocomplete="off">
+          </div>
+          <div class="input-group">
+            <label for="join-code">Room Code</label>
+            <input type="text" id="join-code" placeholder="4-Letter Code (e.g. ABCD)" required autocomplete="off" max-length="4" style="text-transform: uppercase;">
+          </div>
+          <div class="input-group checkbox-group">
+            <label>Your Role</label>
+            <div class="radio-options">
+              <label class="radio-label">
+                <input type="radio" name="join-role" value="estimator" checked>
+                <span class="radio-custom"></span> Estimator
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="join-role" value="spectator">
+                <span class="radio-custom"></span> Spectator
+              </label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-glow">Join Room</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- GAME ROOM SCREEN -->
+    <section id="screen-game" class="screen screen-game hidden">
+      <!-- Top Navigation bar -->
+      <nav class="game-nav glass">
+        <div class="nav-left">
+          <div class="logo logo-small">
+            <span class="logo-icon">🃏</span>
+            <h2>Scrum Poker</h2>
+          </div>
+          <div class="connection-status">
+            <span class="status-indicator online" id="status-indicator"></span>
+            <span id="status-text" class="status-text">Connected</span>
+          </div>
+        </div>
+
+        <div class="nav-center">
+          <div class="room-code-display glass" id="btn-copy-code" title="Click to copy Room Link">
+            <span class="room-code-label">Room:</span>
+            <span class="room-code-val" id="display-room-code">----</span>
+            <span class="copy-icon">📋</span>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <button id="btn-leave" class="btn btn-secondary btn-small">Leave Room</button>
+        </div>
+      </nav>
+
+      <!-- Main Game Area -->
+      <div class="game-layout">
+        <!-- Center/Left Column: Ticket Editor, Cards Deck, and Vote Results -->
+        <div class="game-main">
+          
+          <!-- Ticket / User Story Info -->
+          <div class="ticket-card glass">
+            <div class="ticket-badge">Active Story</div>
+            <div class="ticket-edit-trigger" id="ticket-edit-btn" title="Edit story name & description">✏️</div>
+            
+            <!-- Standard display mode -->
+            <div id="ticket-display" class="ticket-display">
+              <h2 id="ticket-title-display" class="ticket-title">User Story Title</h2>
+              <p id="ticket-desc-display" class="ticket-desc">Story description detail goes here. Estimators will vote on the sizing of this item.</p>
+            </div>
+
+            <!-- In-line editor mode -->
+            <div id="ticket-editor" class="ticket-editor hidden">
+              <input type="text" id="ticket-title-input" class="ticket-title-field" placeholder="Enter story title...">
+              <textarea id="ticket-desc-input" class="ticket-desc-field" placeholder="Enter story description or link..."></textarea>
+              <div class="editor-actions">
+                <button id="btn-save-ticket" class="btn btn-primary btn-small">Save</button>
+                <button id="btn-cancel-ticket" class="btn btn-secondary btn-small">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cards Deck Area -->
+          <div class="deck-container">
+            <div class="deck-header">
+              <h3>Choose your estimation card:</h3>
+              <div class="deck-settings">
+                <label for="deck-select-dropdown">Deck Mode:</label>
+                <select id="deck-select-dropdown" class="deck-select">
+                  <option value="fibonacci">Fibonacci</option>
+                  <option value="tshirt">T-Shirt Sizes</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- Estimation Cards Grid -->
+            <div id="cards-grid" class="cards-grid">
+              <!-- Rendered dynamically in JS -->
+            </div>
+            
+            <!-- Spectator Notice -->
+            <div id="spectator-msg" class="spectator-msg hidden">
+              <span>👀 You are viewing as a Spectator. You can watch results, but cannot cast a vote.</span>
+            </div>
+          </div>
+
+          <!-- Results & Statistics Panel -->
+          <div id="results-panel" class="results-panel glass hidden">
+            <div class="results-header">
+              <h3>Voting Results</h3>
+              <span class="consensus-badge" id="consensus-status">Consensus Reached!</span>
+            </div>
+            
+            <div class="results-grid">
+              <!-- Stats summary cards -->
+              <div class="stats-summary">
+                <div class="stat-card">
+                  <span class="stat-label">Average</span>
+                  <span class="stat-val" id="stat-avg">-</span>
+                </div>
+                <div class="stat-card">
+                  <span class="stat-label">Median</span>
+                  <span class="stat-val" id="stat-median">-</span>
+                </div>
+                <div class="stat-card">
+                  <span class="stat-label">Spread</span>
+                  <span class="stat-val" id="stat-spread">-</span>
+                </div>
+              </div>
+
+              <!-- Vote Distribution chart -->
+              <div class="chart-container">
+                <h4>Vote Distribution</h4>
+                <div class="chart-bars" id="chart-bars">
+                  <!-- Rendered dynamically in JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Consensus helper prompt -->
+            <div class="consensus-hint" id="consensus-hint">
+              💡 Discussion tip: Start by hearing from the voters with the lowest and highest estimations to bridge the gap.
+            </div>
+          </div>
+
+          <!-- Moderator Game Controls -->
+          <div class="moderator-controls glass">
+            <button id="btn-reveal" class="btn btn-primary btn-glow">Reveal Cards</button>
+            <button id="btn-reset" class="btn btn-secondary">Clear / Next Round</button>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Sidebar (Participants List, Chat, Simulator) -->
+        <aside class="game-sidebar glass">
+          <div class="sidebar-section">
+            <div class="sidebar-header">
+              <h3>Participants (<span id="participant-count">0</span>)</h3>
+            </div>
+            <div id="participants-list" class="participants-list">
+              <!-- Rendered dynamically in JS -->
+            </div>
+          </div>
+
+          <!-- Teammate Simulator Panel -->
+          <div class="sidebar-section simulator-box glass-inset">
+            <div class="simulator-header">
+              <div class="sim-title">
+                <span class="sim-icon">🤖</span>
+                <div>
+                  <h4>Teammate Simulator</h4>
+                  <p class="sim-subtitle">Test multi-user flows instantly</p>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="chk-simulator">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div id="simulator-info" class="simulator-info hidden">
+              <p>Adds bots <strong>Alex</strong>, <strong>Taylor</strong>, and <strong>Jordan</strong>. They will vote automatically after you select a card!</p>
+              <div class="simulator-actions">
+                <button id="btn-sim-vote-drift" class="btn btn-secondary btn-xs">Make Bots Vote Now</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
