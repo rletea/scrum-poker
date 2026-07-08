@@ -9,27 +9,13 @@ const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 3000;
 
-const express = require('express');
-const path = require('path');
-const app = express();
-
-// 1. Tell Express to serve all static assets from the "public" directory
+// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 2. Point the root route (/) directly to your index.html file
+// Root route to explicitly serve index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-// 3. Ensure your port configuration handles Render's dynamic port environment variable
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
-
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory store for rooms
 // Structure:
@@ -295,6 +281,7 @@ function handleDisconnect(ws) {
   ws.userId = null;
 }
 
+// Start HTTP and WebSocket server together
 server.listen(PORT, () => {
   console.log(`Scrum Poker Server listening on port ${PORT}`);
 });
