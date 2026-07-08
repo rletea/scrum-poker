@@ -73,9 +73,7 @@ const spectatorMsg = document.getElementById('spectator-msg');
 // Sidebar
 const participantsList = document.getElementById('participants-list');
 const participantCount = document.getElementById('participant-count');
-const chkSimulator = document.getElementById('chk-simulator');
-const simulatorInfo = document.getElementById('simulator-info');
-const btnSimVoteDrift = document.getElementById('btn-sim-vote-drift');
+// Simulator elements removed
 
 // Results & Statistics
 const resultsPanel = document.getElementById('results-panel');
@@ -521,8 +519,7 @@ function setupGameControls() {
     // Reset client state
     localRoomCode = null;
     roomState = null;
-    chkSimulator.checked = false;
-    simulatorInfo.classList.add('hidden');
+    // Simulator reset removed
     // Switch screens
     screenLanding.classList.remove('hidden');
     screenGame.classList.add('hidden');
@@ -571,29 +568,7 @@ function setupGameControls() {
     toggleTicketEditor(true);
   });
 
-  // Teammate Simulator toggle
-  chkSimulator.addEventListener('change', (e) => {
-    const isChecked = e.target.checked;
-    if (isChecked) {
-      simulatorInfo.classList.remove('hidden');
-      sendMsg('addMockPlayers');
-    } else {
-      simulatorInfo.classList.add('hidden');
-      // Kick all mock players
-      if (roomState && roomState.players) {
-        Object.values(roomState.players).forEach(p => {
-          if (p.isMock) {
-            sendMsg('removePlayer', { targetPlayerId: p.id });
-          }
-        });
-      }
-    }
-  });
-
-  // Make Bots Vote action
-  btnSimVoteDrift.addEventListener('click', () => {
-    triggerSimulatorVotes();
-  });
+  // Simulator listeners removed
 }
 
 function toggleTicketEditor(editing) {
@@ -670,10 +645,7 @@ function renderDeck() {
       const newVote = localVote === val ? null : val;
       sendMsg('vote', { vote: newVote });
       
-      // Auto-trigger simulator votes if enabled and local user has cast a vote
-      if (newVote && chkSimulator.checked) {
-        setTimeout(triggerSimulatorVotes, Math.random() * 500 + 400); // realistic delay
-      }
+      // Simulator trigger removed
     });
 
     cardsGrid.appendChild(cardEl);
@@ -691,7 +663,6 @@ function renderParticipants() {
 
     const isMe = p.id === localUserId;
     const nameText = isMe ? `${p.name} <span class="self-tag">You</span>` : p.name;
-    const botBadge = p.isMock ? `<span class="bot-tag">Bot</span>` : '';
     
     // Generate initials for avatar
     const initials = p.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -703,9 +674,6 @@ function renderParticipants() {
 
     // Determine player role display
     const roleText = p.role === 'spectator' ? '👁️ Spectator' : '💻 Estimator';
-
-    // Kick button for simulated players
-    const kickBtnHtml = (p.isMock) ? `<button class="kick-btn" onclick="sendMsg('removePlayer', { targetPlayerId: '${p.id}' })" title="Remove Bot">❌</button>` : '';
 
     let cardSlotHtml = '';
     if (p.role === 'estimator') {
@@ -737,28 +705,17 @@ function renderParticipants() {
       <div class="player-info">
         <div class="player-avatar" style="background-color: ${avatarBg};">${initials}</div>
         <div class="player-details">
-          <span class="player-name">${nameText} ${botBadge}</span>
+          <span class="player-name">${nameText}</span>
           <span class="player-role">${roleText}</span>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap: 0.5rem;">
-        ${kickBtnHtml}
         ${cardSlotHtml}
       </div>
     `;
 
     participantsList.appendChild(row);
   });
-
-  // Sync simulator checkbox state in case state reset cleared bots
-  const hasBots = players.some(p => p.isMock);
-  if (!hasBots && chkSimulator.checked) {
-    chkSimulator.checked = false;
-    simulatorInfo.classList.add('hidden');
-  } else if (hasBots && !chkSimulator.checked) {
-    chkSimulator.checked = true;
-    simulatorInfo.classList.remove('hidden');
-  }
 }
 
 function renderResultsAndStats() {
@@ -939,64 +896,7 @@ function renderResultsAndStats() {
   });
 }
 
-// --------------------------------------------------------------------------
-// TEAM SIMULATOR ENGINES
-// --------------------------------------------------------------------------
-function triggerSimulatorVotes() {
-  if (!roomState || !roomState.players) return;
-
-  const bots = Object.values(roomState.players).filter(p => p.isMock);
-  if (bots.length === 0) return;
-
-  const deck = DECKS[roomState.deckType] || DECKS.fibonacci;
-  
-  // Decide target baseline (if user voted, bots will vote nearby. If not, bots vote randomly)
-  let targetVal = localVote;
-  
-  bots.forEach((bot, idx) => {
-    // Add staggered delay for voting to look natural
-    setTimeout(() => {
-      // Skip if bot already has a vote (unless we want to override it)
-      if (bot.vote && targetVal === null) return;
-      
-      let botVote = '?';
-      if (targetVal) {
-        // Choose vote close to targetVal
-        botVote = chooseSimulatedVote(targetVal, deck);
-      } else {
-        // Totally random vote
-        const validOptions = deck.filter(c => c !== '?' && c !== '☕');
-        botVote = validOptions[Math.floor(Math.random() * validOptions.length)];
-      }
-
-      sendMsg('mockVote', { targetPlayerId: bot.id, vote: botVote });
-    }, (idx + 1) * 350 + Math.random() * 200); // 350ms, 700ms, 1050ms offsets
-  });
-}
-
-function chooseSimulatedVote(targetVal, deck) {
-  // Find index of targetVal in the deck
-  const idx = deck.indexOf(targetVal);
-  if (idx === -1) {
-    return targetVal;
-  }
-
-  // 60% chance of voting exactly the same
-  // 30% chance of voting one card up or down
-  // 10% chance of choosing ? or coffee or random
-  const rand = Math.random();
-  if (rand < 0.6) {
-    return targetVal;
-  } else if (rand < 0.9) {
-    const shift = Math.random() < 0.5 ? -1 : 1;
-    const newIdx = Math.max(0, Math.min(deck.length - 3, idx + shift)); // exclude ? and coffee in shifts
-    return deck[newIdx];
-  } else {
-    // 5% chance of coffee / ?
-    if (Math.random() < 0.5) return '?';
-    return deck[Math.floor(Math.random() * (deck.length - 2))]; // random standard card
-  }
-}
+// Teammate Simulator functions removed
 
 // --------------------------------------------------------------------------
 // UTILITY FUNCTIONS

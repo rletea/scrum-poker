@@ -183,49 +183,7 @@ wss.on('connection', (ws) => {
           break;
         }
 
-        case 'removePlayer': {
-          // Used to kick simulated bot players
-          const { targetPlayerId } = message.data;
-          const { roomCode } = ws;
-          if (roomCode && rooms[roomCode] && rooms[roomCode].players[targetPlayerId]) {
-            delete rooms[roomCode].players[targetPlayerId];
-            console.log(`Removed player ${targetPlayerId} from room ${roomCode}`);
-            broadcastRoomState(roomCode);
-          }
-          break;
-        }
 
-        case 'addMockPlayers': {
-          const { roomCode } = ws;
-          if (roomCode && rooms[roomCode]) {
-            const mockNames = ['Alex (Dev)', 'Taylor (QA)', 'Jordan (UX)'];
-            mockNames.forEach((name) => {
-              const mockId = 'mock_' + Math.random().toString(36).substring(2, 9);
-              rooms[roomCode].players[mockId] = {
-                id: mockId,
-                name: name,
-                role: 'estimator',
-                vote: null,
-                isMock: true // helper flag
-              };
-            });
-            console.log(`Added mock players to room ${roomCode}`);
-            broadcastRoomState(roomCode);
-          }
-          break;
-        }
-
-        case 'mockVote': {
-          // Allows client to trigger a vote for a mock player
-          const { targetPlayerId, vote } = message.data;
-          const { roomCode } = ws;
-          if (roomCode && rooms[roomCode] && rooms[roomCode].players[targetPlayerId]) {
-            rooms[roomCode].players[targetPlayerId].vote = vote;
-            console.log(`Mock player ${rooms[roomCode].players[targetPlayerId].name} voted: ${vote}`);
-            broadcastRoomState(roomCode);
-          }
-          break;
-        }
 
         case 'leave': {
           handleDisconnect(ws);
@@ -253,20 +211,6 @@ function handleDisconnect(ws) {
     if (player) {
       delete rooms[roomCode].players[userId];
       console.log(`User ${player.name} left room ${roomCode}`);
-      
-      // Clean up mock players if there are no real human estimators left in the room
-      const remainingPlayers = Object.values(rooms[roomCode].players);
-      const realEstimators = remainingPlayers.filter(p => !p.isMock && p.role === 'estimator');
-      
-      if (realEstimators.length === 0) {
-        // Remove all mock players
-        remainingPlayers.forEach(p => {
-          if (p.isMock) {
-            delete rooms[roomCode].players[p.id];
-          }
-        });
-      }
-
       // If room is completely empty, delete it
       if (Object.keys(rooms[roomCode].players).length === 0) {
         delete rooms[roomCode];
