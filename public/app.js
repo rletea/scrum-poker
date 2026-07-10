@@ -149,12 +149,19 @@ function setupLandingTabs() {
 function updateCreateButtonState() {
   if (!btnSubmitCreate) return;
   const code = joinCodeInput.value.trim();
+  const tabsControl = document.querySelector('.tabs-control');
   if (code !== '') {
     btnSubmitCreate.disabled = true;
     btnSubmitCreate.title = 'Cannot create a new room while a Room Code is entered. Clear the room code in the Join tab to create a room.';
+    if (tabsControl) {
+      tabsControl.classList.add('hidden');
+    }
   } else {
     btnSubmitCreate.disabled = false;
     btnSubmitCreate.title = '';
+    if (tabsControl) {
+      tabsControl.classList.remove('hidden');
+    }
   }
 }
 
@@ -542,8 +549,11 @@ function setupGameControls() {
   // Leave Room button
   btnLeave.addEventListener('click', () => {
     sendMsg('leave');
-    // Clear URL Hash
+    // Clear URL Hash & inputs
     window.location.hash = '';
+    joinCodeInput.value = '';
+    updateCreateButtonState();
+    
     // Reset client state
     localRoomCode = null;
     roomState = null;
