@@ -117,6 +117,14 @@ body {
   text-decoration: none;
 }
 
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-indigo), var(--accent-purple));
   color: #fff;

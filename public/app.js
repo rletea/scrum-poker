@@ -46,6 +46,7 @@ const createNameInput = document.getElementById('create-name');
 const joinNameInput = document.getElementById('join-name');
 const joinCodeInput = document.getElementById('join-code');
 const createDeckSelect = document.getElementById('create-deck');
+const btnSubmitCreate = document.getElementById('btn-submit-create');
 
 // Game UI
 const statusIndicator = document.getElementById('status-indicator');
@@ -99,6 +100,7 @@ window.addEventListener('DOMContentLoaded', () => {
   checkUrlHash();
   setupBroadcastChannel();
   connectWebSocket();
+  updateCreateButtonState();
 });
 
 // Setup Copy Room Link functionality
@@ -137,6 +139,23 @@ function setupLandingTabs() {
   joinNameInput.addEventListener('input', (e) => {
     createNameInput.value = e.target.value;
   });
+
+  // Watch room code input to disable/enable Create Room button
+  joinCodeInput.addEventListener('input', () => {
+    updateCreateButtonState();
+  });
+}
+
+function updateCreateButtonState() {
+  if (!btnSubmitCreate) return;
+  const code = joinCodeInput.value.trim();
+  if (code !== '') {
+    btnSubmitCreate.disabled = true;
+    btnSubmitCreate.title = 'Cannot create a new room while a Room Code is entered. Clear the room code in the Join tab to create a room.';
+  } else {
+    btnSubmitCreate.disabled = false;
+    btnSubmitCreate.title = '';
+  }
 }
 
 function setupFormSubmissions() {
@@ -173,6 +192,7 @@ function checkUrlHash() {
   if (hash.length === 4) {
     joinCodeInput.value = hash.toUpperCase();
     tabJoin.click();
+    updateCreateButtonState();
   }
 }
 
