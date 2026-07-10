@@ -129,6 +129,14 @@ function setupLandingTabs() {
     formJoin.classList.remove('hidden');
     formCreate.classList.add('hidden');
   });
+
+  // Sync name inputs so they don't clear on tab change
+  createNameInput.addEventListener('input', (e) => {
+    joinNameInput.value = e.target.value;
+  });
+  joinNameInput.addEventListener('input', (e) => {
+    createNameInput.value = e.target.value;
+  });
 }
 
 function setupFormSubmissions() {
