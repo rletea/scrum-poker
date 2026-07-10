@@ -806,7 +806,8 @@ input[type="text"]:focus, select:focus, textarea:focus {
 /* Moderator Action Controls Block */
 .moderator-controls {
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
   padding: 1rem 1.5rem;
   border-radius: var(--radius-md);
   margin-top: auto;
