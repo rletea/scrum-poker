@@ -665,6 +665,13 @@ function renderParticipants() {
   const players = Object.values(roomState.players);
   participantCount.textContent = players.length;
 
+  // Group by Estimators first, then Spectators. Sort alphabetically within groups.
+  players.sort((a, b) => {
+    if (a.role === 'estimator' && b.role === 'spectator') return -1;
+    if (a.role === 'spectator' && b.role === 'estimator') return 1;
+    return a.name.localeCompare(b.name);
+  });
+
   players.forEach(p => {
     const row = document.createElement('div');
     row.className = 'player-row';
