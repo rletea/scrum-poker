@@ -187,7 +187,7 @@ body {
   letter-spacing: 0.05em;
 }
 
-input[type="text"], select, textarea {
+input[type="text"], input[type="password"], select, textarea {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -200,7 +200,7 @@ input[type="text"], select, textarea {
   width: 100%;
 }
 
-input[type="text"]:focus, select:focus, textarea:focus {
+input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.2);
   background: rgba(0, 0, 0, 0.5);
