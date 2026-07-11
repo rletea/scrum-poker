@@ -29,7 +29,24 @@ app.get('/', (req, res) => {
 //     [userId]: { id: string, name: string, role: 'estimator' | 'spectator', vote: string | null }
 //   }
 // }
-const rooms = {};
+const rooms = {
+  'MTCS': {
+    code: 'MTCS',
+    ticketName: 'Story Title',
+    ticketDesc: 'Story description goes here. Double click to edit.',
+    deckType: 'fibonacci',
+    revealed: false,
+    players: {}
+  },
+  'MTPS': {
+    code: 'MTPS',
+    ticketName: 'Story Title',
+    ticketDesc: 'Story description goes here. Double click to edit.',
+    deckType: 'fibonacci',
+    revealed: false,
+    players: {}
+  }
+};
 
 // Helper to broadcast room state to all clients in that room
 function broadcastRoomState(roomCode) {
@@ -216,10 +233,18 @@ function handleDisconnect(ws) {
     if (player) {
       delete rooms[roomCode].players[userId];
       console.log(`User ${player.name} left room ${roomCode}`);
-      // If room is completely empty, delete it
+      // If room is completely empty, delete it (unless it is a reserved room)
+      const reservedRooms = ['MTCS', 'MTPS'];
       if (Object.keys(rooms[roomCode].players).length === 0) {
-        delete rooms[roomCode];
-        console.log(`Deleted empty room ${roomCode}`);
+        if (reservedRooms.includes(roomCode)) {
+          rooms[roomCode].revealed = false;
+          rooms[roomCode].ticketName = 'Story Title';
+          rooms[roomCode].ticketDesc = 'Story description goes here. Double click to edit.';
+          console.log(`Reset empty reserved room ${roomCode}`);
+        } else {
+          delete rooms[roomCode];
+          console.log(`Deleted empty room ${roomCode}`);
+        }
       } else {
         broadcastRoomState(roomCode);
       }
