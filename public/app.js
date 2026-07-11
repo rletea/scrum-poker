@@ -34,8 +34,14 @@ const TSHIRT_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 // DOM ELEMENTS
 // --------------------------------------------------------------------------
 // Screens
+const screenLogin = document.getElementById('screen-login');
 const screenLanding = document.getElementById('screen-landing');
 const screenGame = document.getElementById('screen-game');
+
+// Login Elements
+const formLogin = document.getElementById('form-login');
+const loginUserField = document.getElementById('login-user');
+const loginPassField = document.getElementById('login-pass');
 
 // Forms & Inputs
 const tabCreate = document.getElementById('tab-create');
@@ -94,10 +100,11 @@ const toastEl = document.getElementById('toast');
 // EVENT LISTENERS & SETUP
 // --------------------------------------------------------------------------
 window.addEventListener('DOMContentLoaded', () => {
+  setupLoginHandler();
   setupLandingTabs();
   setupFormSubmissions();
   setupGameControls();
-  checkUrlHash();
+  checkAuthAndHash();
   setupBroadcastChannel();
   connectWebSocket();
   updateCreateButtonState();
@@ -193,13 +200,56 @@ function setupFormSubmissions() {
   });
 }
 
-// Pre-fill Room Code if present in URL hash
-function checkUrlHash() {
+function setupLoginHandler() {
+  if (!formLogin) return;
+  
+  formLogin.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const user = loginUserField.value.trim();
+    const pass = loginPassField.value;
+    
+    if (user === 'Ankor' && pass === 'Scrum#0726@Poker') {
+      sessionStorage.setItem('isLoggedIn', 'true');
+      showToast('🔑 Authentication successful! Welcome, Dealer.');
+      
+      // Clear inputs
+      loginUserField.value = '';
+      loginPassField.value = '';
+      
+      // Go to landing screen
+      screenLogin.classList.add('hidden');
+      screenLanding.classList.remove('hidden');
+    } else {
+      showToast('❌ Invalid Dealer credentials. Try again.');
+    }
+  });
+}
+
+function checkAuthAndHash() {
   const hash = window.location.hash.replace('#', '').trim();
+  
   if (hash.length === 4) {
+    // Shared Invite link bypasses login
+    console.log('Shared room link detected. Bypassing login.');
     joinCodeInput.value = hash.toUpperCase();
     tabJoin.click();
     updateCreateButtonState();
+    
+    screenLogin.classList.add('hidden');
+    screenLanding.classList.remove('hidden');
+    screenGame.classList.add('hidden');
+  } else {
+    // Normal link - check login status
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    if (isLoggedIn) {
+      screenLogin.classList.add('hidden');
+      screenLanding.classList.remove('hidden');
+      screenGame.classList.add('hidden');
+    } else {
+      screenLogin.classList.remove('hidden');
+      screenLanding.classList.add('hidden');
+      screenGame.classList.add('hidden');
+    }
   }
 }
 
@@ -552,15 +602,19 @@ function setupGameControls() {
     // Clear URL Hash & inputs
     window.location.hash = '';
     joinCodeInput.value = '';
+    
+    // Log out (clear login session storage)
+    sessionStorage.removeItem('isLoggedIn');
     updateCreateButtonState();
     
     // Reset client state
     localRoomCode = null;
     roomState = null;
     // Simulator reset removed
-    // Switch screens
-    screenLanding.classList.remove('hidden');
+    // Switch screens and redirect back to login
+    screenLanding.classList.add('hidden');
     screenGame.classList.add('hidden');
+    screenLogin.classList.remove('hidden');
     
     // reset indicator text
     if (!isWebSocketConnected) {

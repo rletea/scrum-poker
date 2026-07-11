@@ -23,8 +23,38 @@
   <!-- MAIN CONTAINER -->
   <main class="app-container">
 
+    <!-- LOGIN SCREEN (CASINO POKER THEME) -->
+    <section id="screen-login" class="screen screen-login hidden">
+      <div class="login-card glass-poker">
+        <!-- Floating CSS Poker Chips -->
+        <div class="poker-chip chip-1">♠</div>
+        <div class="poker-chip chip-2">♥</div>
+        <div class="poker-chip chip-3">♣</div>
+        
+        <header class="login-header">
+          <div class="logo">
+            <span class="logo-icon">🃏</span>
+            <h1>Dealer Table</h1>
+          </div>
+          <p class="subtitle poker-sub">Authenticate to open or manage Scrum poker tables</p>
+        </header>
+
+        <form id="form-login" class="landing-form">
+          <div class="input-group">
+            <label for="login-user">Dealer User</label>
+            <input type="text" id="login-user" placeholder="Dealer name..." required autocomplete="off">
+          </div>
+          <div class="input-group">
+            <label for="login-pass">Table Password</label>
+            <input type="password" id="login-pass" placeholder="••••••••" required autocomplete="off">
+          </div>
+          <button type="submit" class="btn btn-primary btn-glow btn-gold">Enter Table</button>
+        </form>
+      </div>
+    </section>
+
     <!-- LANDING SCREEN -->
-    <section id="screen-landing" class="screen screen-landing">
+    <section id="screen-landing" class="screen screen-landing hidden">
       <div class="landing-card glass">
         <header class="landing-header">
           <div class="logo">
