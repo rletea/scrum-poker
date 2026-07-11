@@ -206,6 +206,11 @@ wss.on('connection', (ws) => {
 
 function handleDisconnect(ws) {
   const { roomCode, userId } = ws;
+  
+  // Clear room variables from socket first to prevent the client from receiving the exit broadcast
+  ws.roomCode = null;
+  ws.userId = null;
+
   if (roomCode && rooms[roomCode]) {
     const player = rooms[roomCode].players[userId];
     if (player) {
@@ -220,9 +225,6 @@ function handleDisconnect(ws) {
       }
     }
   }
-  // Clear room variables from socket
-  ws.roomCode = null;
-  ws.userId = null;
 }
 
 // Start HTTP and WebSocket server together

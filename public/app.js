@@ -370,6 +370,10 @@ function connectWebSocket() {
           break;
 
         case 'state':
+          if (!localRoomCode) {
+            console.log('State message ignored because client is not in a room.');
+            break;
+          }
           roomState = message.data;
           updateGameUI();
           break;
