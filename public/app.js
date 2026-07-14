@@ -1,7 +1,10 @@
 // --------------------------------------------------------------------------
 // APPLICATION STATE
 // --------------------------------------------------------------------------
-let localUserId = 'usr_' + Math.random().toString(36).substring(2, 9);
+if (!window.name || !window.name.startsWith('tab_')) {
+  window.name = 'tab_' + Math.random().toString(36).substring(2, 9);
+}
+let localUserId = window.name;
 let localRoomCode = null;
 let localName = '';
 let localRole = 'estimator'; // 'estimator' | 'spectator'

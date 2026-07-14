@@ -80,6 +80,10 @@ function generateRoomCode() {
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
+  ws.isAlive = true;
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
   
   // Track room and user details on the WebSocket connection object itself
   ws.roomCode = null;
@@ -274,6 +278,24 @@ function handleDisconnect(ws) {
     }
   }
 }
+
+// Keep-Alive Ping-Pong interval to clean up dead WebSocket connections
+const pingInterval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      console.log(`Terminating inactive client socket: ${ws.userId || 'unknown'}`);
+      ws.terminate();
+      handleDisconnect(ws);
+      return;
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 15000);
+
+wss.on('close', () => {
+  clearInterval(pingInterval);
+});
 
 // Start HTTP and WebSocket server together
 server.listen(PORT, () => {
