@@ -45,6 +45,14 @@ const rooms = {
     deckType: 'fibonacci',
     revealed: false,
     players: {}
+  },
+  'PRDS': {
+    code: 'PRDS',
+    ticketName: 'Story Title',
+    ticketDesc: 'Story description goes here. Double click to edit.',
+    deckType: 'fibonacci',
+    revealed: false,
+    players: {}
   }
 };
 
@@ -261,7 +269,7 @@ function handleDisconnect(ws) {
       delete rooms[roomCode].players[userId];
       console.log(`User ${player.name} left room ${roomCode}`);
       // If room is completely empty, delete it (unless it is a reserved room)
-      const reservedRooms = ['MTCS', 'MTPS'];
+      const reservedRooms = ['MTCS', 'MTPS', 'PRDS'];
       if (Object.keys(rooms[roomCode].players).length === 0) {
         if (reservedRooms.includes(roomCode)) {
           rooms[roomCode].revealed = false;
