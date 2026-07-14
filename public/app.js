@@ -9,6 +9,7 @@ let roomState = null;
 let socket = null;
 let reconnectTimer = null;
 let isWebSocketConnected = false;
+let hasConnectedOnce = false;
 
 // Browser-native BroadcastChannel for serverless multi-tab offline sync
 const bc = new BroadcastChannel('scrum_poker_sync');
@@ -182,6 +183,9 @@ function setupFormSubmissions() {
     const deckType = createDeckSelect.value;
     const role = document.querySelector('input[name="create-role"]:checked').value;
     
+    sessionStorage.setItem('userName', name);
+    sessionStorage.setItem('userRole', role);
+    
     localName = name;
     localRole = role;
     
@@ -194,6 +198,9 @@ function setupFormSubmissions() {
     const name = joinNameInput.value.trim();
     const code = joinCodeInput.value.trim().toUpperCase();
     const role = document.querySelector('input[name="join-role"]:checked').value;
+    
+    sessionStorage.setItem('userName', name);
+    sessionStorage.setItem('userRole', role);
     
     localName = name;
     localRole = role;
@@ -229,6 +236,8 @@ function setupLoginHandler() {
 
 function checkAuthAndHash() {
   const hash = window.location.hash.replace('#', '').trim();
+  const savedName = sessionStorage.getItem('userName');
+  const savedRole = sessionStorage.getItem('userRole') || 'estimator';
   
   if (hash.length === 4) {
     // Shared Invite link bypasses login
@@ -237,13 +246,36 @@ function checkAuthAndHash() {
     tabJoin.click();
     updateCreateButtonState();
     
-    screenLogin.classList.add('hidden');
-    screenLanding.classList.remove('hidden');
-    screenGame.classList.add('hidden');
+    if (savedName) {
+      joinNameInput.value = savedName;
+      createNameInput.value = savedName;
+      
+      const radio = document.querySelector(`input[name="join-role"][value="${savedRole}"]`);
+      if (radio) radio.checked = true;
+      
+      // Auto rejoin!
+      console.log(`Auto-rejoining room ${hash} with saved user ${savedName} (${savedRole})`);
+      localName = savedName;
+      localRole = savedRole;
+      joinRoom(hash, savedName, savedRole, null);
+    } else {
+      screenLogin.classList.add('hidden');
+      screenLanding.classList.remove('hidden');
+      screenGame.classList.add('hidden');
+    }
   } else {
     // Normal link - check login status
     const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
     if (isLoggedIn) {
+      if (savedName) {
+        joinNameInput.value = savedName;
+        createNameInput.value = savedName;
+        
+        const radioJoin = document.querySelector(`input[name="join-role"][value="${savedRole}"]`);
+        if (radioJoin) radioJoin.checked = true;
+        const radioCreate = document.querySelector(`input[name="create-role"][value="${savedRole}"]`);
+        if (radioCreate) radioCreate.checked = true;
+      }
       screenLogin.classList.add('hidden');
       screenLanding.classList.remove('hidden');
       screenGame.classList.add('hidden');
@@ -365,9 +397,14 @@ function broadcastLocalState() {
 function connectWebSocket() {
   // Graceful fallback to localhost if opening files locally
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  let host = window.location.host;
+  // Bypass VPN DNS hijacks of localhost during local testing
+  if (host.startsWith('localhost')) {
+    host = host.replace('localhost', '127.0.0.1');
+  }
   const wsUrl = window.location.protocol === 'file:' 
-    ? 'ws://localhost:3000' 
-    : protocol + window.location.host;
+    ? 'ws://127.0.0.1:3000' 
+    : protocol + host;
 
   console.log(`Connecting to WebSocket: ${wsUrl}`);
   
@@ -376,6 +413,7 @@ function connectWebSocket() {
   socket.onopen = () => {
     console.log('WebSocket connection established');
     isWebSocketConnected = true;
+    hasConnectedOnce = true;
     statusIndicator.classList.add('online');
     statusText.textContent = 'Connected';
     
@@ -423,6 +461,11 @@ function connectWebSocket() {
   socket.onclose = () => {
     console.warn('WebSocket connection closed. Falling back to local offline BroadcastChannel sync.');
     isWebSocketConnected = false;
+    
+    // If it closed before ever successfully connecting once, warn about VPN
+    if (!hasConnectedOnce) {
+      showToast('⚠️ WebSocket blocked. If using a VPN, it may block WebSocket upgrades (try disabling it or using 127.0.0.1 locally).');
+    }
     
     // Update indicator to local mode
     if (localRoomCode) {
