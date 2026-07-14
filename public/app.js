@@ -108,6 +108,8 @@ window.addEventListener('DOMContentLoaded', () => {
   setupBroadcastChannel();
   connectWebSocket();
   updateCreateButtonState();
+  setupBroadcastHeartbeat();
+  setupUnloadHandlers();
 });
 
 // Setup Copy Room Link functionality
@@ -282,18 +284,34 @@ function setupBroadcastChannel() {
         case 'syncState':
           // Set state if we receive a valid syncState
           if (data) {
-            roomState = data;
-            
             // Ensure we are registered in the synchronized player list
-            if (!roomState.players[localUserId]) {
-              roomState.players[localUserId] = {
+            if (!data.players[localUserId]) {
+              // Check if username is already taken in this room
+              const nameExists = Object.values(data.players).some(
+                p => p.name.toLowerCase() === localName.toLowerCase() && p.id !== localUserId
+              );
+              if (nameExists) {
+                showToast(`❌ Username "${localName}" is already taken in this room.`);
+                localRoomCode = null;
+                roomState = null;
+                window.location.hash = '';
+                screenGame.classList.add('hidden');
+                screenLanding.classList.remove('hidden');
+                return;
+              }
+
+              data.players[localUserId] = {
                 id: localUserId,
                 name: localName,
                 role: localRole,
-                vote: null
+                vote: null,
+                lastSeen: Date.now()
               };
-              roomState.timestamp = Date.now();
+              data.timestamp = Date.now();
+              roomState = data;
               broadcastLocalState();
+            } else {
+              roomState = data;
             }
             updateGameUI();
           }
@@ -303,7 +321,19 @@ function setupBroadcastChannel() {
           // Update state based on other client actions
           if (data) {
             roomState = data;
+            // Initialize lastSeen for all active players
+            Object.keys(roomState.players).forEach(pId => {
+              if (pId !== localUserId && !roomState.players[pId].lastSeen) {
+                roomState.players[pId].lastSeen = Date.now();
+              }
+            });
             updateGameUI();
+          }
+          break;
+
+        case 'ping':
+          if (roomState && roomState.players[senderId]) {
+            roomState.players[senderId].lastSeen = Date.now();
           }
           break;
 
@@ -509,6 +539,8 @@ function handleLocalAction(type, data) {
     case 'reset': {
       if (!roomState) return;
       roomState.revealed = false;
+      roomState.ticketName = 'Story Title';
+      roomState.ticketDesc = 'Story description goes here. Double click to edit.';
       Object.keys(roomState.players).forEach(pId => {
         roomState.players[pId].vote = null;
       });
@@ -1050,4 +1082,49 @@ function mapNumericToTshirt(num) {
     }
   }
   return closest;
+}
+
+// Unload handler to send leave message before tab closes
+function setupUnloadHandlers() {
+  window.addEventListener('beforeunload', () => {
+    sendMsg('leave');
+  });
+}
+
+// Keep-Alive Heartbeat interval for local BroadcastChannel fallback mode
+function setupBroadcastHeartbeat() {
+  setInterval(() => {
+    // Skip if connected to WebSocket, which handles keep-alives natively
+    if (isWebSocketConnected) return;
+    if (!localRoomCode || !roomState) return;
+
+    // Send a ping to keep our session alive in other tabs
+    bc.postMessage({
+      type: 'ping',
+      roomCode: localRoomCode,
+      senderId: localUserId
+    });
+
+    // Check for stale players (lastSeen older than 12 seconds)
+    const now = Date.now();
+    let stateChanged = false;
+
+    Object.keys(roomState.players).forEach(pId => {
+      // Don't timeout ourselves or bots
+      if (pId === localUserId || roomState.players[pId].isMock) return;
+
+      const lastSeen = roomState.players[pId].lastSeen || now;
+      if (now - lastSeen > 12000) {
+        console.log(`Player ${roomState.players[pId].name} timed out in local mode. Removing.`);
+        delete roomState.players[pId];
+        stateChanged = true;
+      }
+    });
+
+    if (stateChanged) {
+      roomState.timestamp = Date.now();
+      broadcastLocalState();
+      updateGameUI();
+    }
+  }, 5000);
 }

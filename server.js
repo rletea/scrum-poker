@@ -118,6 +118,27 @@ wss.on('connection', (ws) => {
             }
           }
 
+          // Check if userName already exists in the room players and has an active socket
+          const existingPlayer = Object.values(rooms[roomCode].players).find(
+            p => p.name.toLowerCase() === userName.toLowerCase()
+          );
+          if (existingPlayer) {
+            let isSocketActive = false;
+            wss.clients.forEach(client => {
+              if (client !== ws && client.roomCode === roomCode && client.userId === existingPlayer.id && client.readyState === WebSocket.OPEN) {
+                isSocketActive = true;
+              }
+            });
+            if (isSocketActive) {
+              ws.send(JSON.stringify({ type: 'error', message: `Username "${userName}" is already taken in this room.` }));
+              return;
+            } else {
+              // The old socket is inactive, remove the player so they can rejoin with the new socket
+              delete rooms[roomCode].players[existingPlayer.id];
+              console.log(`Replaced inactive duplicate player "${userName}" in room ${roomCode}`);
+            }
+          }
+
           // Assign a unique user ID to this connection
           const userId = ws.userId || Math.random().toString(36).substring(2, 9);
           ws.userId = userId;
@@ -162,6 +183,8 @@ wss.on('connection', (ws) => {
           const { roomCode } = ws;
           if (roomCode && rooms[roomCode]) {
             rooms[roomCode].revealed = false;
+            rooms[roomCode].ticketName = 'Story Title';
+            rooms[roomCode].ticketDesc = 'Story description goes here. Double click to edit.';
             // Clear votes for all estimators (spectators don't vote anyway)
             Object.keys(rooms[roomCode].players).forEach((pId) => {
               rooms[roomCode].players[pId].vote = null;
