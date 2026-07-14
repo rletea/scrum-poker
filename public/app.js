@@ -804,15 +804,30 @@ function renderDeck() {
   cardsGrid.classList.remove('hidden');
 
   const deck = DECKS[roomState.deckType] || DECKS.fibonacci;
+  const suits = ['♠', '♥', '♣', '♦'];
 
-  deck.forEach(val => {
+  deck.forEach((val, index) => {
     const cardEl = document.createElement('div');
     cardEl.className = 'poker-card';
     if (localVote === val) {
       cardEl.classList.add('active');
     }
 
-    cardEl.innerHTML = `<span class="poker-card-value">${val}</span>`;
+    const suit = suits[index % 4];
+    const isRed = suit === '♥' || suit === '♦';
+    const suitClass = isRed ? 'suit-red' : 'suit-black';
+
+    cardEl.innerHTML = `
+      <div class="card-corner top-left ${suitClass}">
+        <span class="corner-val">${val}</span>
+        <span class="corner-suit">${suit}</span>
+      </div>
+      <span class="poker-card-value ${suitClass}">${val}</span>
+      <div class="card-corner bottom-right ${suitClass}">
+        <span class="corner-val">${val}</span>
+        <span class="corner-suit">${suit}</span>
+      </div>
+    `;
     
     cardEl.addEventListener('click', () => {
       // Toggle vote
@@ -866,16 +881,23 @@ function renderParticipants() {
       const faceBackVotedClass = p.vote ? '' : 'not-voted';
       const backFaceContent = p.vote ? p.vote : '-';
 
+      // Pick dynamic suit watermark based on player's name hash
+      const suits = ['♠', '♥', '♣', '♦'];
+      const playerSuit = suits[Math.abs(hashCode(p.name)) % 4];
+      const isRed = playerSuit === '♥' || playerSuit === '♦';
+      const suitClass = isRed ? 'suit-red' : 'suit-black';
+
       cardSlotHtml = `
         <div class="player-card-slot">
           <div class="card-flip-inner ${revealedClass}">
-            <!-- Front Face: Shown while voting -->
+            <!-- Front Face: Shown while voting (classic casino blue back) -->
             <div class="card-face card-face-front ${hasVotedClass}">
-              ${p.vote ? '✓' : '?'}
+              ${p.vote ? '' : '?'}
             </div>
-            <!-- Back Face: Shown on Reveal -->
-            <div class="card-face card-face-back ${faceBackVotedClass}">
-              ${backFaceContent}
+            <!-- Back Face: Shown on Reveal (watermarked clean white face) -->
+            <div class="card-face card-face-back ${faceBackVotedClass} ${suitClass}">
+              ${p.vote ? `<span class="card-suit-watermark">${playerSuit}</span>` : ''}
+              <span class="card-reveal-val">${backFaceContent}</span>
             </div>
           </div>
         </div>
