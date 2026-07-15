@@ -69,6 +69,10 @@
               <input type="text" id="register-user" placeholder="Choose a username..." required autocomplete="off">
             </div>
             <div class="input-group">
+              <label for="register-email">Email Address</label>
+              <input type="email" id="register-email" placeholder="e.g. dealer@domain.com" required autocomplete="off">
+            </div>
+            <div class="input-group">
               <label for="register-pass">Password</label>
               <input type="password" id="register-pass" placeholder="Create a password..." required autocomplete="off">
             </div>
@@ -334,6 +338,9 @@
           <button type="submit" class="btn btn-primary btn-gold btn-glow">Save Changes</button>
         </div>
       </form>
+      <div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 1.25rem; padding-top: 1rem;">
+        <button type="button" id="btn-delete-account" class="btn" style="width: 100%; background: rgba(224, 36, 36, 0.25); border: 1px solid #e02424; color: #ff9999; font-size: 0.85rem; padding: 0.55rem; border-radius: var(--radius-sm); cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold; transition: all 0.2s; box-shadow: 0 0 5px rgba(224,36,36,0.15);">Delete Account</button>
+      </div>
     </div>
   </div>
 

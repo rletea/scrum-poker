@@ -50,6 +50,7 @@ const loginPassField = document.getElementById('login-pass');
 // Registration Elements
 const formRegister = document.getElementById('form-register');
 const registerUserField = document.getElementById('register-user');
+const registerEmailField = document.getElementById('register-email');
 const registerPassField = document.getElementById('register-pass');
 const registerPassConfirmField = document.getElementById('register-pass-confirm');
 
@@ -69,6 +70,7 @@ const btnCloseChangePw = document.getElementById('btn-close-change-pw');
 const formChangePassword = document.getElementById('form-change-password');
 const changeOldPass = document.getElementById('change-old-pass');
 const changeNewPass = document.getElementById('change-new-pass');
+const btnDeleteAccount = document.getElementById('btn-delete-account');
 
 // Forms & Inputs
 const tabCreate = document.getElementById('tab-create');
@@ -153,6 +155,21 @@ window.addEventListener('DOMContentLoaded', () => {
   if (btnCloseChangePw && changePwModal) {
     btnCloseChangePw.addEventListener('click', () => {
       changePwModal.classList.add('hidden');
+    });
+  }
+
+  if (btnDeleteAccount) {
+    btnDeleteAccount.addEventListener('click', () => {
+      const currentUser = sessionStorage.getItem('userName');
+      if (!currentUser) return;
+      if (currentUser === 'Ankor') {
+        showToast('⚠️ Admin account cannot be deleted.');
+        return;
+      }
+      const confirmed = confirm("⚠️ Are you sure you want to permanently delete your Scrum Master account? All your registered credentials will be lost. This cannot be undone.");
+      if (confirmed) {
+        sendMsg('deleteAccount', { user: currentUser });
+      }
     });
   }
 
@@ -346,6 +363,7 @@ function setupLoginHandler() {
     formRegister.addEventListener('submit', (e) => {
       e.preventDefault();
       const user = registerUserField.value.trim();
+      const email = registerEmailField.value.trim();
       const pass = registerPassField.value;
       const passConfirm = registerPassConfirmField.value;
 
@@ -357,13 +375,22 @@ function setupLoginHandler() {
         showToast('⚠️ Username "Ankor" is reserved.');
         return;
       }
+      if (!email) {
+        showToast('⚠️ Email address cannot be empty.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showToast('⚠️ Invalid email address format.');
+        return;
+      }
       if (pass !== passConfirm) {
         showToast('❌ Passwords do not match.');
         return;
       }
 
       if (isWebSocketConnected && socket && socket.readyState === WebSocket.OPEN) {
-        sendMsg('register', { user, pass });
+        sendMsg('register', { user, pass, email });
       } else {
         showToast('❌ Registration is unavailable in offline local mode.');
       }
@@ -675,6 +702,39 @@ function connectWebSocket() {
             showToast('🔑 Password changed successfully!');
           } else {
             showToast(`❌ Password change failed: ${message.message}`);
+          }
+          break;
+
+        case 'deleteAccountResult':
+          if (message.success) {
+            showToast('💀 Account permanently deleted.');
+            if (changePwModal) {
+              changePwModal.classList.add('hidden');
+            }
+            
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('userName');
+            sessionStorage.removeItem('userRole');
+            updateCreateButtonState();
+            
+            localRoomCode = null;
+            roomState = null;
+            
+            screenLanding.classList.add('hidden');
+            screenGame.classList.add('hidden');
+            screenLogin.classList.remove('hidden');
+            
+            if (userHeaderGreeting) {
+              userHeaderGreeting.classList.add('hidden');
+            }
+            if (userProfileBar) {
+              userProfileBar.classList.add('hidden');
+            }
+            if (dealerLogsLinkContainer) {
+              dealerLogsLinkContainer.classList.add('hidden');
+            }
+          } else {
+            showToast(`❌ Failed to delete account: ${message.message}`);
           }
           break;
 
