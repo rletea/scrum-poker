@@ -24,6 +24,41 @@
   --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
+/* Theme variables */
+body.theme-casino-green {
+  --app-bg: radial-gradient(circle, #0e5c32 0%, #06311a 60%, #01140a 100%);
+  --card-bg: rgba(12, 60, 34, 0.85);
+  --card-border: 10px solid #1c130e;
+  --card-outline: 0 0 0 2px #d4af37, 0 10px 30px rgba(0, 0, 0, 0.5), 0 25px 60px rgba(0, 0, 0, 0.7);
+  --btn-primary-bg: linear-gradient(135deg, #f9e394 0%, #d4af37 50%, #aa7c11 100%);
+  --btn-primary-color: #120c08;
+  --btn-primary-border: 1px solid rgba(255, 255, 255, 0.25);
+  --btn-glow-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  --border-focus: #d4af37;
+  --focus-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+  --accent-color: #d4af37;
+  --chip-display: flex;
+  --input-border: rgba(212, 175, 55, 0.25);
+  --input-bg: rgba(3, 17, 10, 0.85);
+}
+
+body.theme-glassmorphic {
+  --app-bg: radial-gradient(circle at 50% 50%, #1c1936 0%, #0c0919 100%);
+  --card-bg: rgba(22, 21, 38, 0.7);
+  --card-border: 1px solid rgba(255, 255, 255, 0.08);
+  --card-outline: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 1px rgba(255,255,255,0.1);
+  --btn-primary-bg: linear-gradient(135deg, #7c4dff 0%, #651fff 100%);
+  --btn-primary-color: #ffffff;
+  --btn-primary-border: 1px solid rgba(255, 255, 255, 0.1);
+  --btn-glow-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+  --border-focus: #7c4dff;
+  --focus-shadow: 0 0 12px rgba(124, 77, 255, 0.4);
+  --accent-color: #9e75ff;
+  --chip-display: none;
+  --input-border: rgba(255, 255, 255, 0.1);
+  --input-bg: rgba(0, 0, 0, 0.3);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -32,7 +67,8 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg-color);
+  background: var(--app-bg);
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
@@ -40,6 +76,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: background 0.3s ease;
 }
 
 /* --------------------------------------------------------------------------
@@ -126,14 +163,14 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-indigo), var(--accent-purple));
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+  border: var(--btn-primary-border);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+  box-shadow: var(--btn-glow-shadow);
 }
 
 .btn-primary:active {
@@ -1210,7 +1247,7 @@ input:checked + .slider:before {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(circle, #0e5c32 0%, #06311a 60%, #01140a 100%);
+  background: var(--app-bg);
   display: grid;
   place-items: center;
   z-index: 1000;
@@ -1220,15 +1257,12 @@ input:checked + .slider:before {
 
 /* Wood border & leather padded rim style for poker card */
 .glass-poker {
-  background: rgba(12, 60, 34, 0.85);
+  background: var(--card-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 10px solid #1c130e; /* Thick dark wood border */
+  border: var(--card-border);
   border-radius: 24px;
-  box-shadow: 
-    0 0 0 2px #d4af37, /* Gold inlay ring */
-    0 10px 30px rgba(0, 0, 0, 0.5), /* Inner shadow */
-    0 25px 60px rgba(0, 0, 0, 0.7); /* Outer table shadow */
+  box-shadow: var(--card-outline);
   padding: 2rem 2rem;
   position: relative;
   max-width: 440px;
@@ -1247,11 +1281,11 @@ input:checked + .slider:before {
 
 /* CSS-drawn Poker Chips */
 .poker-chip {
+  display: var(--chip-display, flex) !important;
   position: absolute;
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  display: flex;
   justify-content: center;
   align-items: center;
   font-size: 1.6rem;
@@ -1298,15 +1332,15 @@ input:checked + .slider:before {
 
 /* Gold Button Style */
 .btn-gold {
-  background: linear-gradient(135deg, #f9e394 0%, #d4af37 50%, #aa7c11 100%) !important;
-  color: #120c08 !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-color) !important;
+  border: var(--btn-primary-border) !important;
   font-weight: 700;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3) !important;
+  box-shadow: var(--btn-glow-shadow) !important;
 }
 
 .btn-gold:hover {
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5) !important;
+  box-shadow: var(--btn-glow-shadow) !important;
   transform: translateY(-2px);
 }
 
@@ -1318,17 +1352,17 @@ input:checked + .slider:before {
 .screen-login input[type="text"], 
 .screen-login input[type="password"],
 .screen-login input[type="email"] {
-  background: rgba(3, 17, 10, 0.85);
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   color: #fff;
 }
 
 .screen-login input[type="text"]:focus, 
 .screen-login input[type="password"]:focus,
 .screen-login input[type="email"]:focus {
-  border-color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
-  background: rgba(3, 17, 10, 0.95);
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-shadow);
+  background: var(--input-bg);
 }
 
 .screen-login .input-group {

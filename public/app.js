@@ -72,6 +72,7 @@ const changeOldPass = document.getElementById('change-old-pass');
 const changeNewPass = document.getElementById('change-new-pass');
 const dealerDeleteAccountContainer = document.getElementById('dealer-delete-account-container');
 const btnDeleteAccountLink = document.getElementById('btn-delete-account-link');
+const selectTheme = document.getElementById('select-theme');
 
 // Forms & Inputs
 const tabCreate = document.getElementById('tab-create');
@@ -224,12 +225,25 @@ window.addEventListener('DOMContentLoaded', () => {
       window.open('/logs.html', '_blank');
     });
   }
+
+  if (selectTheme) {
+    // Set initial select value from body class
+    const initialTheme = document.body.classList.contains('theme-glassmorphic') ? 'glassmorphic' : 'casino-green';
+    selectTheme.value = initialTheme;
+
+    selectTheme.addEventListener('change', () => {
+      const themeVal = selectTheme.value;
+      document.body.className = `theme-${themeVal}`;
+      localStorage.setItem('selectedTheme', themeVal);
+    });
+  }
 });
 
 // Setup Copy Room Link functionality
 btnCopyCode.addEventListener('click', () => {
   if (!localRoomCode) return;
-  const shareUrl = `${window.location.origin}${window.location.pathname}#${localRoomCode}`;
+  const currentTheme = document.body.classList.contains('theme-glassmorphic') ? 'glassmorphic' : 'casino-green';
+  const shareUrl = `${window.location.origin}${window.location.pathname}#${localRoomCode}?theme=${currentTheme}`;
   navigator.clipboard.writeText(shareUrl).then(() => {
     showToast('📋 Room invite link copied to clipboard!');
   }).catch(err => {
@@ -426,7 +440,35 @@ function setupLoginHandler() {
 }
 
 function checkAuthAndHash() {
-  const hash = window.location.hash.replace('#', '').trim();
+  const rawHash = window.location.hash.replace('#', '').trim();
+  let hash = rawHash;
+  let urlTheme = null;
+  
+  if (rawHash.includes('?')) {
+    const parts = rawHash.split('?');
+    hash = parts[0].trim();
+    const queryParams = new URLSearchParams(parts[1]);
+    urlTheme = queryParams.get('theme');
+  }
+
+  // Determine active theme
+  let activeTheme = 'casino-green';
+  if (urlTheme === 'glassmorphic' || urlTheme === 'casino-green') {
+    activeTheme = urlTheme;
+    localStorage.setItem('selectedTheme', urlTheme);
+  } else {
+    const savedTheme = localStorage.getItem('selectedTheme');
+    if (savedTheme === 'glassmorphic' || savedTheme === 'casino-green') {
+      activeTheme = savedTheme;
+    }
+  }
+  
+  // Apply active theme
+  document.body.className = `theme-${activeTheme}`;
+  if (selectTheme) {
+    selectTheme.value = activeTheme;
+  }
+
   const savedName = sessionStorage.getItem('userName');
   const savedRole = sessionStorage.getItem('userRole') || 'estimator';
   

@@ -12,7 +12,7 @@
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="theme-casino-green">
 
   <!-- Background Glow Accents -->
   <div class="bg-glow bg-glow-1"></div>
@@ -97,6 +97,13 @@
           <p class="subtitle">Estimate user stories efficiently with your team, anywhere.</p>
           <div id="user-header-greeting" class="user-header-greeting hidden" style="margin-top: 0.75rem; font-size: 0.95rem; text-align: center; color: var(--text-secondary);">
             Welcome, <strong id="logged-in-username" style="color: #fff; text-shadow: 0 0 5px rgba(212, 175, 55, 0.4);">Dealer</strong>
+          </div>
+          <div id="theme-selector-container" style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem;">
+            <label for="select-theme" style="color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Theme:</label>
+            <select id="select-theme" style="background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; padding: 0.25rem 0.5rem; outline: none; cursor: pointer; font-family: inherit;">
+              <option value="casino-green">Casino Poker Green</option>
+              <option value="glassmorphic">Premium Glassmorphic</option>
+            </select>
           </div>
         </header>
 
