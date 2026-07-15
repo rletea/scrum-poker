@@ -63,6 +63,10 @@
             <h1>Scrum Poker</h1>
           </div>
           <p class="subtitle">Estimate user stories efficiently with your team, anywhere.</p>
+          <div class="user-profile-bar">
+            <span>Welcome, <strong id="logged-in-username">Dealer</strong></span>
+            <button id="btn-open-change-pw" class="btn btn-secondary btn-xs" style="margin-left: 0.5rem;">Change Password</button>
+          </div>
         </header>
 
         <div class="tabs-control">
@@ -126,18 +130,9 @@
         </form>
       </div>
 
-      <!-- Dealer Logs Dashboard -->
-      <div id="dealer-logs-card" class="dealer-logs-card glass-poker hidden">
-        <header class="logs-header">
-          <div class="logs-header-title">
-            <span class="logo-icon">📜</span>
-            <h3>System Activity Logs</h3>
-          </div>
-          <button id="btn-refresh-logs" class="btn btn-secondary btn-xs">Refresh Logs</button>
-        </header>
-        <div id="logs-container" class="logs-container">
-          <pre id="logs-content" class="logs-content">Loading activity history...</pre>
-        </div>
+      <!-- Dealer Logs Link (opens standalone logs.html) -->
+      <div id="dealer-logs-link-container" class="dealer-logs-link-container hidden" style="margin-top: 1.5rem; display: flex; justify-content: center; width: 100%; max-width: 480px;">
+        <a href="/logs.html" target="_blank" class="btn btn-gold btn-glow" style="width: 100%; text-align: center; text-decoration: none;">📜 View System Activity Logs</a>
       </div>
     </section>
 
@@ -283,6 +278,30 @@
     </section>
 
   </main>
+
+  <!-- Change Password Modal -->
+  <div id="change-pw-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-poker">
+      <header class="modal-header">
+        <span class="logo-icon">🔑</span>
+        <h3>Change Password</h3>
+      </header>
+      <form id="form-change-password">
+        <div class="input-group">
+          <label for="change-old-pass">Current Password</label>
+          <input type="password" id="change-old-pass" placeholder="••••••••" required autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label for="change-new-pass">New Password</label>
+          <input type="password" id="change-new-pass" placeholder="••••••••" required autocomplete="off">
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btn-close-change-pw" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-gold btn-glow">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

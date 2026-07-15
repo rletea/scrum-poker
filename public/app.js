@@ -47,10 +47,15 @@ const formLogin = document.getElementById('form-login');
 const loginUserField = document.getElementById('login-user');
 const loginPassField = document.getElementById('login-pass');
 
-// Logs Elements
-const dealerLogsCard = document.getElementById('dealer-logs-card');
-const logsContent = document.getElementById('logs-content');
-const btnRefreshLogs = document.getElementById('btn-refresh-logs');
+// Logs & Password Elements
+const dealerLogsLinkContainer = document.getElementById('dealer-logs-link-container');
+const loggedInUsername = document.getElementById('logged-in-username');
+const btnOpenChangePw = document.getElementById('btn-open-change-pw');
+const changePwModal = document.getElementById('change-pw-modal');
+const btnCloseChangePw = document.getElementById('btn-close-change-pw');
+const formChangePassword = document.getElementById('form-change-password');
+const changeOldPass = document.getElementById('change-old-pass');
+const changeNewPass = document.getElementById('change-new-pass');
 
 // Forms & Inputs
 const tabCreate = document.getElementById('tab-create');
@@ -120,9 +125,37 @@ window.addEventListener('DOMContentLoaded', () => {
   setupBroadcastHeartbeat();
   setupUnloadHandlers();
   
-  if (btnRefreshLogs) {
-    btnRefreshLogs.addEventListener('click', () => {
-      sendMsg('getLogs');
+  // Change Password Modal triggers
+  if (btnOpenChangePw && changePwModal) {
+    btnOpenChangePw.addEventListener('click', () => {
+      const currentUser = sessionStorage.getItem('userName') || 'Dealer';
+      if (currentUser === 'Ankor') {
+        showToast('⚠️ Admin password cannot be changed.');
+        return;
+      }
+      changePwModal.classList.remove('hidden');
+    });
+  }
+  
+  if (btnCloseChangePw && changePwModal) {
+    btnCloseChangePw.addEventListener('click', () => {
+      changePwModal.classList.add('hidden');
+    });
+  }
+
+  if (formChangePassword) {
+    formChangePassword.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const user = sessionStorage.getItem('userName') || 'Dealer';
+      const oldPass = changeOldPass.value;
+      const newPass = changeNewPass.value;
+
+      sendMsg('changePassword', { user, oldPass, newPass });
+      
+      // Clear inputs and close
+      changeOldPass.value = '';
+      changeNewPass.value = '';
+      changePwModal.classList.add('hidden');
     });
   }
 });
@@ -263,8 +296,8 @@ function checkAuthAndHash() {
     tabJoin.click();
     updateCreateButtonState();
     
-    if (dealerLogsCard) {
-      dealerLogsCard.classList.add('hidden');
+    if (dealerLogsLinkContainer) {
+      dealerLogsLinkContainer.classList.add('hidden');
     }
     
     if (savedName) {
@@ -301,16 +334,18 @@ function checkAuthAndHash() {
       screenLanding.classList.remove('hidden');
       screenGame.classList.add('hidden');
       
-      if (dealerLogsCard) {
-        dealerLogsCard.classList.remove('hidden');
-        sendMsg('getLogs');
+      if (loggedInUsername && savedName) {
+        loggedInUsername.textContent = savedName;
+      }
+      if (dealerLogsLinkContainer) {
+        dealerLogsLinkContainer.classList.remove('hidden');
       }
     } else {
       screenLogin.classList.remove('hidden');
       screenLanding.classList.add('hidden');
       screenGame.classList.add('hidden');
-      if (dealerLogsCard) {
-        dealerLogsCard.classList.add('hidden');
+      if (dealerLogsLinkContainer) {
+        dealerLogsLinkContainer.classList.add('hidden');
       }
     }
   }
@@ -482,32 +517,42 @@ function connectWebSocket() {
         case 'loginResult':
           if (message.success) {
             sessionStorage.setItem('isLoggedIn', 'true');
-            showToast('🔑 Authentication successful! Welcome, Dealer.');
+            sessionStorage.setItem('userName', message.userName);
+            
+            if (message.isNewUser) {
+              showToast('🔑 Account created! Remember this password for your next login.');
+            } else {
+              showToast(`🔑 Authentication successful! Welcome, ${message.userName}.`);
+            }
             
             // Clear inputs
             loginUserField.value = '';
             loginPassField.value = '';
             
+            // Populate usernames in fields
+            joinNameInput.value = message.userName;
+            createNameInput.value = message.userName;
+            if (loggedInUsername) {
+              loggedInUsername.textContent = message.userName;
+            }
+            
             // Go to landing screen
             screenLogin.classList.add('hidden');
             screenLanding.classList.remove('hidden');
             
-            if (dealerLogsCard) {
-              dealerLogsCard.classList.remove('hidden');
-              sendMsg('getLogs');
+            if (dealerLogsLinkContainer) {
+              dealerLogsLinkContainer.classList.remove('hidden');
             }
           } else {
             showToast(`❌ ${message.message}`);
           }
           break;
 
-        case 'logs':
-          if (logsContent) {
-            logsContent.textContent = message.data;
-            const logsContainer = document.getElementById('logs-container');
-            if (logsContainer) {
-              logsContainer.scrollTop = logsContainer.scrollHeight;
-            }
+        case 'changePasswordResult':
+          if (message.success) {
+            showToast('🔑 Password changed successfully!');
+          } else {
+            showToast(`❌ Password change failed: ${message.message}`);
           }
           break;
 
@@ -526,8 +571,8 @@ function connectWebSocket() {
           screenGame.classList.add('hidden');
           screenLogin.classList.remove('hidden');
           
-          if (dealerLogsCard) {
-            dealerLogsCard.classList.add('hidden');
+          if (dealerLogsLinkContainer) {
+            dealerLogsLinkContainer.classList.add('hidden');
           }
           break;
 
@@ -776,8 +821,8 @@ function setupGameControls() {
     screenGame.classList.add('hidden');
     screenLogin.classList.remove('hidden');
     
-    if (dealerLogsCard) {
-      dealerLogsCard.classList.add('hidden');
+    if (dealerLogsLinkContainer) {
+      dealerLogsLinkContainer.classList.add('hidden');
     }
     
     // reset indicator text

@@ -19,6 +19,16 @@ app.get('/', (req, res) => {
 });
 
 const logFilePath = path.join(__dirname, 'login_history.txt');
+const credentialsFilePath = path.join(__dirname, 'credentials.json');
+
+// Initialize credentials.json if it doesn't exist
+if (!fs.existsSync(credentialsFilePath)) {
+  const initialCredentials = {
+    "Ankor": "Scrum#0726@Poker"
+  };
+  fs.writeFileSync(credentialsFilePath, JSON.stringify(initialCredentials, null, 2), 'utf8');
+  console.log('Created credentials.json with default admin credentials.');
+}
 
 function logActivity(userName, action, roomCode) {
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'UTC' }) + ' UTC';
@@ -265,13 +275,93 @@ wss.on('connection', (ws) => {
 
         case 'login': {
           const { user, pass } = message.data;
-          if (user === 'Ankor' && pass === 'Scrum#0726@Poker') {
-            ws.send(JSON.stringify({ type: 'loginResult', success: true }));
-            logActivity(user, 'Dealer Logged In', null);
-          } else {
-            ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Invalid Dealer credentials.' }));
-            logActivity(user || 'Unknown', 'Failed Login Attempt', null);
+          const trimmedUser = user ? user.trim() : '';
+          
+          if (!trimmedUser) {
+            ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Username cannot be empty.' }));
+            break;
           }
+          if (!pass) {
+            ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Password cannot be empty.' }));
+            break;
+          }
+
+          fs.readFile(credentialsFilePath, 'utf8', (err, data) => {
+            let credentials = { "Ankor": "Scrum#0726@Poker" };
+            if (!err) {
+              try {
+                credentials = JSON.parse(data);
+              } catch (e) {
+                console.error('Failed to parse credentials:', e);
+              }
+            }
+
+            if (credentials[trimmedUser] === undefined) {
+              // Register new user
+              credentials[trimmedUser] = pass;
+              fs.writeFile(credentialsFilePath, JSON.stringify(credentials, null, 2), 'utf8', (writeErr) => {
+                if (writeErr) {
+                  console.error('Failed to write credentials file:', writeErr);
+                  ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Server database error during registration.' }));
+                } else {
+                  ws.send(JSON.stringify({ type: 'loginResult', success: true, isNewUser: true, userName: trimmedUser }));
+                  logActivity(trimmedUser, 'New User Registered & Logged In', null);
+                }
+              });
+            } else {
+              // Existing user check
+              if (credentials[trimmedUser] === pass) {
+                ws.send(JSON.stringify({ type: 'loginResult', success: true, userName: trimmedUser }));
+                logActivity(trimmedUser, 'Dealer Logged In', null);
+              } else {
+                ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Incorrect password for this user.' }));
+                logActivity(trimmedUser, 'Failed Login Attempt (Wrong Password)', null);
+              }
+            }
+          });
+          break;
+        }
+
+        case 'changePassword': {
+          const { user, oldPass, newPass } = message.data;
+          const trimmedUser = user ? user.trim() : '';
+          
+          if (trimmedUser === 'Ankor') {
+            ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'Admin password cannot be changed.' }));
+            break;
+          }
+          if (!trimmedUser || !oldPass || !newPass) {
+            ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'Invalid arguments.' }));
+            break;
+          }
+
+          fs.readFile(credentialsFilePath, 'utf8', (err, data) => {
+            let credentials = {};
+            if (!err) {
+              try {
+                credentials = JSON.parse(data);
+              } catch (e) {
+                console.error('Failed to parse credentials:', e);
+              }
+            }
+
+            if (credentials[trimmedUser] === undefined) {
+              ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'User does not exist.' }));
+            } else if (credentials[trimmedUser] !== oldPass) {
+              ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'Current password does not match.' }));
+            } else {
+              credentials[trimmedUser] = newPass;
+              fs.writeFile(credentialsFilePath, JSON.stringify(credentials, null, 2), 'utf8', (writeErr) => {
+                if (writeErr) {
+                  console.error('Failed to write credentials file:', writeErr);
+                  ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'Server database error.' }));
+                } else {
+                  ws.send(JSON.stringify({ type: 'changePasswordResult', success: true }));
+                  logActivity(trimmedUser, 'Changed Password', null);
+                }
+              });
+            }
+          });
           break;
         }
 
