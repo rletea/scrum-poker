@@ -59,6 +59,7 @@ const loginFormContainer = document.getElementById('login-form-container');
 const registerFormContainer = document.getElementById('register-form-container');
 
 // Logs & Password Elements
+const userProfileBar = document.getElementById('user-profile-bar');
 const dealerLogsLinkContainer = document.getElementById('dealer-logs-link-container');
 const loggedInUsername = document.getElementById('logged-in-username');
 const btnOpenChangePw = document.getElementById('btn-open-change-pw');
@@ -241,8 +242,8 @@ function setupFormSubmissions() {
     const deckType = createDeckSelect.value;
     const role = document.querySelector('input[name="create-role"]:checked').value;
     
-    localStorage.setItem('userName', name);
-    localStorage.setItem('userRole', role);
+    sessionStorage.setItem('userName', name);
+    sessionStorage.setItem('userRole', role);
     
     localName = name;
     localRole = role;
@@ -257,8 +258,8 @@ function setupFormSubmissions() {
     const code = joinCodeInput.value.trim().toUpperCase();
     const role = document.querySelector('input[name="join-role"]:checked').value;
     
-    localStorage.setItem('userName', name);
-    localStorage.setItem('userRole', role);
+    sessionStorage.setItem('userName', name);
+    sessionStorage.setItem('userRole', role);
     
     localName = name;
     localRole = role;
@@ -345,8 +346,8 @@ function setupLoginHandler() {
 
 function checkAuthAndHash() {
   const hash = window.location.hash.replace('#', '').trim();
-  const savedName = localStorage.getItem('userName');
-  const savedRole = localStorage.getItem('userRole') || 'estimator';
+  const savedName = sessionStorage.getItem('userName');
+  const savedRole = sessionStorage.getItem('userRole') || 'estimator';
   
   if (hash.length === 4) {
     // Shared Invite link bypasses login
@@ -355,6 +356,9 @@ function checkAuthAndHash() {
     tabJoin.click();
     updateCreateButtonState();
     
+    if (userProfileBar) {
+      userProfileBar.classList.add('hidden');
+    }
     if (dealerLogsLinkContainer) {
       dealerLogsLinkContainer.classList.add('hidden');
     }
@@ -380,6 +384,7 @@ function checkAuthAndHash() {
     // Normal link - check login status
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     if (isLoggedIn) {
+      const savedLoggedInUser = localStorage.getItem('userName');
       if (savedName) {
         joinNameInput.value = savedName;
         createNameInput.value = savedName;
@@ -393,11 +398,14 @@ function checkAuthAndHash() {
       screenLanding.classList.remove('hidden');
       screenGame.classList.add('hidden');
       
-      if (loggedInUsername && savedName) {
-        loggedInUsername.textContent = savedName;
+      if (userProfileBar) {
+        userProfileBar.classList.remove('hidden');
+      }
+      if (loggedInUsername && savedLoggedInUser) {
+        loggedInUsername.textContent = savedLoggedInUser;
       }
       if (dealerLogsLinkContainer) {
-        if (savedName === 'Ankor') {
+        if (savedLoggedInUser === 'Ankor') {
           dealerLogsLinkContainer.classList.remove('hidden');
         } else {
           dealerLogsLinkContainer.classList.add('hidden');
@@ -407,6 +415,9 @@ function checkAuthAndHash() {
       screenLogin.classList.remove('hidden');
       screenLanding.classList.add('hidden');
       screenGame.classList.add('hidden');
+      if (userProfileBar) {
+        userProfileBar.classList.add('hidden');
+      }
       if (dealerLogsLinkContainer) {
         dealerLogsLinkContainer.classList.add('hidden');
       }
@@ -594,6 +605,9 @@ function connectWebSocket() {
             if (loggedInUsername) {
               loggedInUsername.textContent = message.userName;
             }
+            if (userProfileBar) {
+              userProfileBar.classList.remove('hidden');
+            }
             
             // Go to landing screen
             screenLogin.classList.add('hidden');
@@ -631,6 +645,9 @@ function connectWebSocket() {
           joinCodeInput.value = '';
           
           localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('userName');
+          sessionStorage.removeItem('userName');
+          sessionStorage.removeItem('userRole');
           updateCreateButtonState();
           
           localRoomCode = null;
@@ -640,6 +657,9 @@ function connectWebSocket() {
           screenGame.classList.add('hidden');
           screenLogin.classList.remove('hidden');
           
+          if (userProfileBar) {
+            userProfileBar.classList.add('hidden');
+          }
           if (dealerLogsLinkContainer) {
             dealerLogsLinkContainer.classList.add('hidden');
           }
@@ -879,6 +899,9 @@ function setupGameControls() {
     
     // Log out (clear login session storage)
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userName');
+    sessionStorage.removeItem('userName');
+    sessionStorage.removeItem('userRole');
     updateCreateButtonState();
     
     // Reset client state
@@ -890,6 +913,9 @@ function setupGameControls() {
     screenGame.classList.add('hidden');
     screenLogin.classList.remove('hidden');
     
+    if (userProfileBar) {
+      userProfileBar.classList.add('hidden');
+    }
     if (dealerLogsLinkContainer) {
       dealerLogsLinkContainer.classList.add('hidden');
     }
