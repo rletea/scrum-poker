@@ -225,7 +225,7 @@ window.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (logsModal) {
         logsModal.classList.remove('hidden');
-        sendMsg('requestLogs');
+        sendMsg('getLogs');
       }
     });
   }
@@ -233,7 +233,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnRefreshLogs = document.getElementById('btn-refresh-logs');
   if (btnRefreshLogs) {
     btnRefreshLogs.addEventListener('click', () => {
-      sendMsg('requestLogs');
+      sendMsg('getLogs');
     });
   }
 
