@@ -31,7 +31,6 @@ if (fs.existsSync(credentialsFilePath)) {
 }
 // Enforce reserved credentials
 initialCredentials["Ankor"] = "Scrum#0726@Poker";
-initialCredentials["Merlin"] = "SigmaTau#0616@letr";
 
 fs.writeFileSync(credentialsFilePath, JSON.stringify(initialCredentials, null, 2), 'utf8');
 console.log('Synchronized credentials.json database with reserved users.');
@@ -370,8 +369,8 @@ wss.on('connection', (ws) => {
           const { user, oldPass, newPass } = message.data;
           const trimmedUser = user ? user.trim() : '';
           
-          if (trimmedUser === 'Ankor' || trimmedUser === 'Merlin') {
-            ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'Reserved user passwords cannot be changed.' }));
+          if (trimmedUser === 'Ankor') {
+            ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'Admin password cannot be changed.' }));
             break;
           }
           if (!trimmedUser || !oldPass || !newPass) {
