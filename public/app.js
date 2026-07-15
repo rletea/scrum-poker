@@ -227,18 +227,35 @@ function setupLandingTabs() {
 function updateCreateButtonState() {
   if (!btnSubmitCreate) return;
   const code = joinCodeInput.value.trim();
-  const tabsControl = document.querySelector('.tabs-control');
-  if (code !== '') {
+  const hash = window.location.hash.replace('#', '').trim();
+  
+  if (hash.length === 4) {
+    // Joining via shared invite link
+    btnSubmitCreate.disabled = true;
+    btnSubmitCreate.title = 'Create Room is disabled when joining via an invite link.';
+    if (tabCreate) {
+      tabCreate.disabled = true;
+      tabCreate.style.opacity = '0.5';
+      tabCreate.style.pointerEvents = 'none';
+      tabCreate.title = 'Create Room is disabled when joining via an invite link.';
+    }
+  } else if (code !== '') {
     btnSubmitCreate.disabled = true;
     btnSubmitCreate.title = 'Cannot create a new room while a Room Code is entered. Clear the room code in the Join tab to create a room.';
-    if (tabsControl) {
-      tabsControl.classList.add('hidden');
+    if (tabCreate) {
+      tabCreate.disabled = true;
+      tabCreate.style.opacity = '0.5';
+      tabCreate.style.pointerEvents = 'none';
+      tabCreate.title = 'Clear the Room Code input to enable creating a room.';
     }
   } else {
     btnSubmitCreate.disabled = false;
     btnSubmitCreate.title = '';
-    if (tabsControl) {
-      tabsControl.classList.remove('hidden');
+    if (tabCreate) {
+      tabCreate.disabled = false;
+      tabCreate.style.opacity = '1';
+      tabCreate.style.pointerEvents = 'auto';
+      tabCreate.title = '';
     }
   }
 }
