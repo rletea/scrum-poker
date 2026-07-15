@@ -726,7 +726,16 @@ function connectWebSocket() {
           break;
 
         case 'registerResult':
-          if (!message.success) {
+          if (message.success) {
+            showToast(`🔑 ${message.message}`);
+            registerUserField.value = '';
+            registerEmailField.value = '';
+            registerPassField.value = '';
+            registerPassConfirmField.value = '';
+            if (tabLoginToggle) {
+              tabLoginToggle.click();
+            }
+          } else {
             showToast(`❌ Registration failed: ${message.message}`);
           }
           break;

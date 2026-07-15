@@ -490,8 +490,7 @@ wss.on('connection', (ws) => {
               ws.send(JSON.stringify({ type: 'registerResult', success: false, message: result.message }));
             } else {
               logActivity(trimmedUser, `New User Registered (${trimmedEmail})`, null);
-              ws.send(JSON.stringify({ type: 'loginResult', success: true, userName: trimmedUser }));
-              logActivity(trimmedUser, 'Dealer Logged In (Auto-Login)', null);
+              ws.send(JSON.stringify({ type: 'registerResult', success: true, message: 'Registration successful! Please log in.' }));
             }
           });
           break;
