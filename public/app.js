@@ -173,6 +173,31 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Handle Leave Room (Logout) from Landing Card
+  const btnLandingLeaves = document.querySelectorAll('.btn-landing-leave');
+  btnLandingLeaves.forEach(btn => {
+    btn.addEventListener('click', () => {
+      sessionStorage.removeItem('isLoggedIn');
+      sessionStorage.removeItem('userName');
+      sessionStorage.removeItem('userRole');
+      updateCreateButtonState();
+      
+      screenLanding.classList.add('hidden');
+      screenGame.classList.add('hidden');
+      screenLogin.classList.remove('hidden');
+      
+      if (userHeaderGreeting) {
+        userHeaderGreeting.classList.add('hidden');
+      }
+      if (userProfileBar) {
+        userProfileBar.classList.add('hidden');
+      }
+      if (dealerLogsLinkContainer) {
+        dealerLogsLinkContainer.classList.add('hidden');
+      }
+    });
+  });
+
   if (formChangePassword) {
     formChangePassword.addEventListener('submit', (e) => {
       e.preventDefault();
