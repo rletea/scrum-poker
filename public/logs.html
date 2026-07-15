@@ -12,7 +12,7 @@
   
   <script>
     // Route guard: only allow the Administrator (Ankor) to inspect logs
-    if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('userName') !== 'Ankor') {
+    if (sessionStorage.getItem('isLoggedIn') !== 'true' || sessionStorage.getItem('userName') !== 'Ankor') {
       alert('Access Denied. Only the Administrator (Ankor) can view system logs.');
       window.location.href = '/';
     }

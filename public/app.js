@@ -140,7 +140,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Change Password Modal triggers
   if (btnOpenChangePw && changePwModal) {
     btnOpenChangePw.addEventListener('click', () => {
-      const currentUser = localStorage.getItem('userName') || 'Dealer';
+      const currentUser = sessionStorage.getItem('userName') || 'Dealer';
       if (currentUser === 'Ankor') {
         showToast('⚠️ Admin password cannot be changed.');
         return;
@@ -158,7 +158,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (formChangePassword) {
     formChangePassword.addEventListener('submit', (e) => {
       e.preventDefault();
-      const user = localStorage.getItem('userName') || 'Dealer';
+      const user = sessionStorage.getItem('userName') || 'Dealer';
       const oldPass = changeOldPass.value;
       const newPass = changeNewPass.value;
 
@@ -168,6 +168,15 @@ window.addEventListener('DOMContentLoaded', () => {
       changeOldPass.value = '';
       changeNewPass.value = '';
       changePwModal.classList.add('hidden');
+    });
+  }
+
+  // Handle Logs link open via JavaScript to clone sessionStorage to new tab
+  const logsLink = dealerLogsLinkContainer ? dealerLogsLinkContainer.querySelector('a') : null;
+  if (logsLink) {
+    logsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.open('/logs.html', '_blank');
     });
   }
 });
@@ -298,8 +307,8 @@ function setupLoginHandler() {
       } else {
         // Offline fallback validation
         if (user === 'Ankor' && pass === 'Scrum#0726@Poker') {
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userName', user);
+          sessionStorage.setItem('isLoggedIn', 'true');
+          sessionStorage.setItem('userName', user);
           showToast('🔑 Local Authentication successful!');
           
           loginUserField.value = '';
@@ -382,9 +391,9 @@ function checkAuthAndHash() {
     }
   } else {
     // Normal link - check login status
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
     if (isLoggedIn) {
-      const savedLoggedInUser = localStorage.getItem('userName');
+      const savedLoggedInUser = sessionStorage.getItem('userName');
       if (savedName) {
         joinNameInput.value = savedName;
         createNameInput.value = savedName;
@@ -590,8 +599,8 @@ function connectWebSocket() {
 
         case 'loginResult':
           if (message.success) {
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('userName', message.userName);
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('userName', message.userName);
             
             showToast(`🔑 Authentication successful! Welcome, ${message.userName}.`);
             
@@ -644,8 +653,7 @@ function connectWebSocket() {
           window.location.hash = '';
           joinCodeInput.value = '';
           
-          localStorage.removeItem('isLoggedIn');
-          localStorage.removeItem('userName');
+          sessionStorage.removeItem('isLoggedIn');
           sessionStorage.removeItem('userName');
           sessionStorage.removeItem('userRole');
           updateCreateButtonState();
@@ -898,8 +906,7 @@ function setupGameControls() {
     joinCodeInput.value = '';
     
     // Log out (clear login session storage)
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userName');
+    sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('userName');
     sessionStorage.removeItem('userRole');
     updateCreateButtonState();
