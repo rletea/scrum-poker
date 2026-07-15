@@ -70,7 +70,8 @@ const btnCloseChangePw = document.getElementById('btn-close-change-pw');
 const formChangePassword = document.getElementById('form-change-password');
 const changeOldPass = document.getElementById('change-old-pass');
 const changeNewPass = document.getElementById('change-new-pass');
-const btnDeleteAccount = document.getElementById('btn-delete-account');
+const dealerDeleteAccountContainer = document.getElementById('dealer-delete-account-container');
+const btnDeleteAccountLink = document.getElementById('btn-delete-account-link');
 
 // Forms & Inputs
 const tabCreate = document.getElementById('tab-create');
@@ -158,8 +159,9 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (btnDeleteAccount) {
-    btnDeleteAccount.addEventListener('click', () => {
+  if (btnDeleteAccountLink) {
+    btnDeleteAccountLink.addEventListener('click', (e) => {
+      e.preventDefault();
       const currentUser = sessionStorage.getItem('userName');
       if (!currentUser) return;
       if (currentUser === 'Ankor') {
@@ -444,6 +446,9 @@ function checkAuthAndHash() {
     if (dealerLogsLinkContainer) {
       dealerLogsLinkContainer.classList.add('hidden');
     }
+    if (dealerDeleteAccountContainer) {
+      dealerDeleteAccountContainer.classList.add('hidden');
+    }
     
     if (savedName) {
       joinNameInput.value = savedName;
@@ -489,12 +494,13 @@ function checkAuthAndHash() {
       if (loggedInUsername && savedLoggedInUser) {
         loggedInUsername.textContent = savedLoggedInUser;
       }
-      if (dealerLogsLinkContainer) {
-        if (savedLoggedInUser === 'Ankor') {
-          dealerLogsLinkContainer.classList.remove('hidden');
-        } else {
-          dealerLogsLinkContainer.classList.add('hidden');
-        }
+      
+      if (savedLoggedInUser === 'Ankor') {
+        if (dealerLogsLinkContainer) dealerLogsLinkContainer.classList.remove('hidden');
+        if (dealerDeleteAccountContainer) dealerDeleteAccountContainer.classList.add('hidden');
+      } else {
+        if (dealerLogsLinkContainer) dealerLogsLinkContainer.classList.add('hidden');
+        if (dealerDeleteAccountContainer) dealerDeleteAccountContainer.classList.remove('hidden');
       }
     } else {
       screenLogin.classList.remove('hidden');
@@ -508,6 +514,9 @@ function checkAuthAndHash() {
       }
       if (dealerLogsLinkContainer) {
         dealerLogsLinkContainer.classList.add('hidden');
+      }
+      if (dealerDeleteAccountContainer) {
+        dealerDeleteAccountContainer.classList.add('hidden');
       }
     }
   }
@@ -704,12 +713,12 @@ function connectWebSocket() {
             screenLogin.classList.add('hidden');
             screenLanding.classList.remove('hidden');
             
-            if (dealerLogsLinkContainer) {
-              if (message.userName === 'Ankor') {
-                dealerLogsLinkContainer.classList.remove('hidden');
-              } else {
-                dealerLogsLinkContainer.classList.add('hidden');
-              }
+            if (message.userName === 'Ankor') {
+              if (dealerLogsLinkContainer) dealerLogsLinkContainer.classList.remove('hidden');
+              if (dealerDeleteAccountContainer) dealerDeleteAccountContainer.classList.add('hidden');
+            } else {
+              if (dealerLogsLinkContainer) dealerLogsLinkContainer.classList.add('hidden');
+              if (dealerDeleteAccountContainer) dealerDeleteAccountContainer.classList.remove('hidden');
             }
           } else {
             showToast(`❌ ${message.message}`);
@@ -758,6 +767,9 @@ function connectWebSocket() {
             if (dealerLogsLinkContainer) {
               dealerLogsLinkContainer.classList.add('hidden');
             }
+            if (dealerDeleteAccountContainer) {
+              dealerDeleteAccountContainer.classList.add('hidden');
+            }
           } else {
             showToast(`❌ Failed to delete account: ${message.message}`);
           }
@@ -788,6 +800,9 @@ function connectWebSocket() {
           }
           if (dealerLogsLinkContainer) {
             dealerLogsLinkContainer.classList.add('hidden');
+          }
+          if (dealerDeleteAccountContainer) {
+            dealerDeleteAccountContainer.classList.add('hidden');
           }
           break;
 
@@ -1046,6 +1061,9 @@ function setupGameControls() {
     }
     if (dealerLogsLinkContainer) {
       dealerLogsLinkContainer.classList.add('hidden');
+    }
+    if (dealerDeleteAccountContainer) {
+      dealerDeleteAccountContainer.classList.add('hidden');
     }
     
     // reset indicator text

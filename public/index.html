@@ -172,9 +172,14 @@
           <div>
             <a href="#" id="btn-open-change-pw" style="color: var(--text-secondary); text-decoration: underline; transition: color 0.2s;">Change Password</a>
           </div>
-          <!-- Right side: View System Activity Logs (only visible to Ankor) -->
-          <div id="dealer-logs-link-container" class="hidden">
-            <a href="/logs.html" target="_blank" style="color: var(--text-secondary); text-decoration: underline; transition: color 0.2s;">View System Activity Logs</a>
+          <!-- Right side: View Logs (Ankor) OR Delete Account (Dealers) -->
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <div id="dealer-logs-link-container" class="hidden">
+              <a href="/logs.html" target="_blank" style="color: var(--text-secondary); text-decoration: underline; transition: color 0.2s;">View System Activity Logs</a>
+            </div>
+            <div id="dealer-delete-account-container" class="hidden">
+              <a href="#" id="btn-delete-account-link" style="color: #ff9999; text-decoration: underline; transition: color 0.2s;">Delete Account</a>
+            </div>
           </div>
         </div>
       </div>
@@ -344,9 +349,6 @@
           <button type="submit" class="btn btn-primary btn-gold btn-glow">Save Changes</button>
         </div>
       </form>
-      <div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 1.25rem; padding-top: 1rem;">
-        <button type="button" id="btn-delete-account" class="btn" style="width: 100%; background: rgba(224, 36, 36, 0.25); border: 1px solid #e02424; color: #ff9999; font-size: 0.85rem; padding: 0.55rem; border-radius: var(--radius-sm); cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: bold; transition: all 0.2s; box-shadow: 0 0 5px rgba(224,36,36,0.15);">Delete Account</button>
-      </div>
     </div>
   </div>
 
