@@ -125,6 +125,20 @@
           <button type="submit" class="btn btn-primary btn-glow">Join Room</button>
         </form>
       </div>
+
+      <!-- Dealer Logs Dashboard -->
+      <div id="dealer-logs-card" class="dealer-logs-card glass-poker hidden">
+        <header class="logs-header">
+          <div class="logs-header-title">
+            <span class="logo-icon">📜</span>
+            <h3>System Activity Logs</h3>
+          </div>
+          <button id="btn-refresh-logs" class="btn btn-secondary btn-xs">Refresh Logs</button>
+        </header>
+        <div id="logs-container" class="logs-container">
+          <pre id="logs-content" class="logs-content">Loading activity history...</pre>
+        </div>
+      </div>
     </section>
 
     <!-- GAME ROOM SCREEN -->

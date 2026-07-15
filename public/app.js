@@ -47,6 +47,11 @@ const formLogin = document.getElementById('form-login');
 const loginUserField = document.getElementById('login-user');
 const loginPassField = document.getElementById('login-pass');
 
+// Logs Elements
+const dealerLogsCard = document.getElementById('dealer-logs-card');
+const logsContent = document.getElementById('logs-content');
+const btnRefreshLogs = document.getElementById('btn-refresh-logs');
+
 // Forms & Inputs
 const tabCreate = document.getElementById('tab-create');
 const tabJoin = document.getElementById('tab-join');
@@ -114,6 +119,12 @@ window.addEventListener('DOMContentLoaded', () => {
   updateCreateButtonState();
   setupBroadcastHeartbeat();
   setupUnloadHandlers();
+  
+  if (btnRefreshLogs) {
+    btnRefreshLogs.addEventListener('click', () => {
+      sendMsg('getLogs');
+    });
+  }
 });
 
 // Setup Copy Room Link functionality
@@ -220,19 +231,22 @@ function setupLoginHandler() {
     const user = loginUserField.value.trim();
     const pass = loginPassField.value;
     
-    if (user === 'Ankor' && pass === 'Scrum#0726@Poker') {
-      sessionStorage.setItem('isLoggedIn', 'true');
-      showToast('🔑 Authentication successful! Welcome, Dealer.');
-      
-      // Clear inputs
-      loginUserField.value = '';
-      loginPassField.value = '';
-      
-      // Go to landing screen
-      screenLogin.classList.add('hidden');
-      screenLanding.classList.remove('hidden');
+    if (isWebSocketConnected && socket && socket.readyState === WebSocket.OPEN) {
+      sendMsg('login', { user, pass });
     } else {
-      showToast('❌ Invalid Dealer credentials. Try again.');
+      // Offline fallback validation
+      if (user === 'Ankor' && pass === 'Scrum#0726@Poker') {
+        sessionStorage.setItem('isLoggedIn', 'true');
+        showToast('🔑 Local Authentication successful!');
+        
+        loginUserField.value = '';
+        loginPassField.value = '';
+        
+        screenLogin.classList.add('hidden');
+        screenLanding.classList.remove('hidden');
+      } else {
+        showToast('❌ Invalid credentials (Local offline mode).');
+      }
     }
   });
 }
@@ -248,6 +262,10 @@ function checkAuthAndHash() {
     joinCodeInput.value = hash.toUpperCase();
     tabJoin.click();
     updateCreateButtonState();
+    
+    if (dealerLogsCard) {
+      dealerLogsCard.classList.add('hidden');
+    }
     
     if (savedName) {
       joinNameInput.value = savedName;
@@ -282,10 +300,18 @@ function checkAuthAndHash() {
       screenLogin.classList.add('hidden');
       screenLanding.classList.remove('hidden');
       screenGame.classList.add('hidden');
+      
+      if (dealerLogsCard) {
+        dealerLogsCard.classList.remove('hidden');
+        sendMsg('getLogs');
+      }
     } else {
       screenLogin.classList.remove('hidden');
       screenLanding.classList.add('hidden');
       screenGame.classList.add('hidden');
+      if (dealerLogsCard) {
+        dealerLogsCard.classList.add('hidden');
+      }
     }
   }
 }
@@ -451,6 +477,58 @@ function connectWebSocket() {
 
         case 'error':
           showToast(`❌ ${message.message}`);
+          break;
+
+        case 'loginResult':
+          if (message.success) {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            showToast('🔑 Authentication successful! Welcome, Dealer.');
+            
+            // Clear inputs
+            loginUserField.value = '';
+            loginPassField.value = '';
+            
+            // Go to landing screen
+            screenLogin.classList.add('hidden');
+            screenLanding.classList.remove('hidden');
+            
+            if (dealerLogsCard) {
+              dealerLogsCard.classList.remove('hidden');
+              sendMsg('getLogs');
+            }
+          } else {
+            showToast(`❌ ${message.message}`);
+          }
+          break;
+
+        case 'logs':
+          if (logsContent) {
+            logsContent.textContent = message.data;
+            const logsContainer = document.getElementById('logs-container');
+            if (logsContainer) {
+              logsContainer.scrollTop = logsContainer.scrollHeight;
+            }
+          }
+          break;
+
+        case 'kicked':
+          showToast(`⚠️ ${message.message}`);
+          window.location.hash = '';
+          joinCodeInput.value = '';
+          
+          sessionStorage.removeItem('isLoggedIn');
+          updateCreateButtonState();
+          
+          localRoomCode = null;
+          roomState = null;
+          
+          screenLanding.classList.add('hidden');
+          screenGame.classList.add('hidden');
+          screenLogin.classList.remove('hidden');
+          
+          if (dealerLogsCard) {
+            dealerLogsCard.classList.add('hidden');
+          }
           break;
 
         default:
@@ -697,6 +775,10 @@ function setupGameControls() {
     screenLanding.classList.add('hidden');
     screenGame.classList.add('hidden');
     screenLogin.classList.remove('hidden');
+    
+    if (dealerLogsCard) {
+      dealerLogsCard.classList.add('hidden');
+    }
     
     // reset indicator text
     if (!isWebSocketConnected) {

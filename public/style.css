@@ -1330,3 +1330,84 @@ input:checked + .slider:before {
   background: rgba(3, 17, 10, 0.95);
 }
 
+/* --------------------------------------------------------------------------
+   DEALER SYSTEM LOGS VIEW
+   -------------------------------------------------------------------------- */
+
+.dealer-logs-card {
+  margin-top: 2rem;
+  background: rgba(12, 60, 34, 0.7) !important; /* Translucent poker felt */
+  border-width: 4px !important; /* Elegant wood border */
+  border-color: #231914 !important;
+  border-style: solid;
+  border-radius: var(--radius-md) !important;
+  max-width: 550px !important; /* Wider display for logs */
+  width: 100%;
+  box-shadow: 
+    0 0 0 1px #d4af37,
+    0 15px 40px rgba(0, 0, 0, 0.6);
+  padding: 1.5rem 2rem !important;
+}
+
+.logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding-bottom: 0.75rem;
+}
+
+.logs-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+}
+
+.logs-header-title h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.logs-container {
+  background: rgba(3, 17, 10, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.logs-content {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8rem;
+  color: #fffdf5; /* Off-white-gold text */
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* Customize logs scrollbar */
+.logs-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.4);
+  border-radius: 3px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.7);
+}
+

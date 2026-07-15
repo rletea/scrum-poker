@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,6 +18,16 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+const logFilePath = path.join(__dirname, 'login_history.txt');
+
+function logActivity(userName, action, roomCode) {
+  const timestamp = new Date().toLocaleString('en-US', { timeZone: 'UTC' }) + ' UTC';
+  const logLine = `[${timestamp}] User: ${userName} | Action: ${action} | Room: ${roomCode || 'N/A'}\n`;
+  fs.appendFile(logFilePath, logLine, (err) => {
+    if (err) console.error('Failed to write activity log:', err);
+  });
+}
+
 // In-memory store for rooms
 // Structure:
 // rooms[roomCode] = {
@@ -27,7 +38,8 @@ app.get('/', (req, res) => {
 //   revealed: boolean,
 //   players: {
 //     [userId]: { id: string, name: string, role: 'estimator' | 'spectator', vote: string | null }
-//   }
+//   },
+//   lastActivity: number
 // }
 const rooms = {
   'MTCS': {
@@ -36,7 +48,8 @@ const rooms = {
     ticketDesc: 'Story description goes here. Double click to edit.',
     deckType: 'fibonacci',
     revealed: false,
-    players: {}
+    players: {},
+    lastActivity: Date.now()
   },
   'MTPS': {
     code: 'MTPS',
@@ -44,7 +57,8 @@ const rooms = {
     ticketDesc: 'Story description goes here. Double click to edit.',
     deckType: 'fibonacci',
     revealed: false,
-    players: {}
+    players: {},
+    lastActivity: Date.now()
   },
   'PRDS': {
     code: 'PRDS',
@@ -52,7 +66,8 @@ const rooms = {
     ticketDesc: 'Story description goes here. Double click to edit.',
     deckType: 'fibonacci',
     revealed: false,
-    players: {}
+    players: {},
+    lastActivity: Date.now()
   }
 };
 
@@ -118,9 +133,11 @@ wss.on('connection', (ws) => {
               ticketDesc: 'Story description goes here. Double click to edit.',
               deckType: deckType,
               revealed: false,
-              players: {}
+              players: {},
+              lastActivity: Date.now()
             };
             console.log(`Created room: ${roomCode}`);
+            logActivity('System', 'Created new room', roomCode);
           } else {
             roomCode = roomCode.toUpperCase().trim();
             if (!rooms[roomCode]) {
@@ -164,7 +181,9 @@ wss.on('connection', (ws) => {
             vote: null
           };
 
+          rooms[roomCode].lastActivity = Date.now();
           console.log(`User ${userName} (${role}) joined room ${roomCode}`);
+          logActivity(userName, `Joined room (Role: ${role})`, roomCode);
           ws.send(JSON.stringify({ type: 'welcome', data: { userId, roomCode } }));
           broadcastRoomState(roomCode);
           break;
@@ -175,6 +194,7 @@ wss.on('connection', (ws) => {
           const { roomCode, userId } = ws;
           if (roomCode && rooms[roomCode] && rooms[roomCode].players[userId]) {
             rooms[roomCode].players[userId].vote = vote;
+            rooms[roomCode].lastActivity = Date.now();
             console.log(`User ${rooms[roomCode].players[userId].name} voted: ${vote} in room ${roomCode}`);
             broadcastRoomState(roomCode);
           }
@@ -185,7 +205,9 @@ wss.on('connection', (ws) => {
           const { roomCode } = ws;
           if (roomCode && rooms[roomCode]) {
             rooms[roomCode].revealed = true;
+            rooms[roomCode].lastActivity = Date.now();
             console.log(`Votes revealed in room ${roomCode}`);
+            logActivity('System', 'Revealed cards', roomCode);
             broadcastRoomState(roomCode);
           }
           break;
@@ -197,11 +219,13 @@ wss.on('connection', (ws) => {
             rooms[roomCode].revealed = false;
             rooms[roomCode].ticketName = 'Story Title';
             rooms[roomCode].ticketDesc = 'Story description goes here. Double click to edit.';
+            rooms[roomCode].lastActivity = Date.now();
             // Clear votes for all estimators (spectators don't vote anyway)
             Object.keys(rooms[roomCode].players).forEach((pId) => {
               rooms[roomCode].players[pId].vote = null;
             });
             console.log(`Round reset in room ${roomCode}`);
+            logActivity('System', 'Cleared cards/reset round', roomCode);
             broadcastRoomState(roomCode);
           }
           break;
@@ -213,7 +237,9 @@ wss.on('connection', (ws) => {
           if (roomCode && rooms[roomCode]) {
             rooms[roomCode].ticketName = ticketName;
             rooms[roomCode].ticketDesc = ticketDesc;
+            rooms[roomCode].lastActivity = Date.now();
             console.log(`Ticket updated in room ${roomCode}: ${ticketName}`);
+            logActivity('System', `Updated ticket title to "${ticketName}"`, roomCode);
             broadcastRoomState(roomCode);
           }
           break;
@@ -224,14 +250,39 @@ wss.on('connection', (ws) => {
           const { roomCode } = ws;
           if (roomCode && rooms[roomCode]) {
             rooms[roomCode].deckType = deckType;
+            rooms[roomCode].lastActivity = Date.now();
             // Clear votes when switching decks to keep state consistent
             Object.keys(rooms[roomCode].players).forEach((pId) => {
               rooms[roomCode].players[pId].vote = null;
             });
             rooms[roomCode].revealed = false;
             console.log(`Deck type changed to ${deckType} in room ${roomCode}`);
+            logActivity('System', `Changed deck type to ${deckType}`, roomCode);
             broadcastRoomState(roomCode);
           }
+          break;
+        }
+
+        case 'login': {
+          const { user, pass } = message.data;
+          if (user === 'Ankor' && pass === 'Scrum#0726@Poker') {
+            ws.send(JSON.stringify({ type: 'loginResult', success: true }));
+            logActivity(user, 'Dealer Logged In', null);
+          } else {
+            ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Invalid Dealer credentials.' }));
+            logActivity(user || 'Unknown', 'Failed Login Attempt', null);
+          }
+          break;
+        }
+
+        case 'getLogs': {
+          fs.readFile(logFilePath, 'utf8', (err, data) => {
+            if (err) {
+              ws.send(JSON.stringify({ type: 'logs', data: 'No activity logs found.' }));
+            } else {
+              ws.send(JSON.stringify({ type: 'logs', data: data }));
+            }
+          });
           break;
         }
 
@@ -268,6 +319,8 @@ function handleDisconnect(ws) {
     if (player) {
       delete rooms[roomCode].players[userId];
       console.log(`User ${player.name} left room ${roomCode}`);
+      logActivity(player.name, 'Left room', roomCode);
+      
       // If room is completely empty, delete it (unless it is a reserved room)
       const reservedRooms = ['MTCS', 'MTPS', 'PRDS'];
       if (Object.keys(rooms[roomCode].players).length === 0) {
@@ -275,12 +328,14 @@ function handleDisconnect(ws) {
           rooms[roomCode].revealed = false;
           rooms[roomCode].ticketName = 'Story Title';
           rooms[roomCode].ticketDesc = 'Story description goes here. Double click to edit.';
+          rooms[roomCode].lastActivity = Date.now();
           console.log(`Reset empty reserved room ${roomCode}`);
         } else {
           delete rooms[roomCode];
           console.log(`Deleted empty room ${roomCode}`);
         }
       } else {
+        rooms[roomCode].lastActivity = Date.now();
         broadcastRoomState(roomCode);
       }
     }
@@ -301,8 +356,52 @@ const pingInterval = setInterval(() => {
   });
 }, 15000);
 
+// Inactivity timer check (runs every 1 minute)
+const INACTIVITY_TIMEOUT = 1.5 * 60 * 60 * 1000; // 1.5 hours in ms
+const inactivityInterval = setInterval(() => {
+  const now = Date.now();
+  Object.keys(rooms).forEach((roomCode) => {
+    const room = rooms[roomCode];
+    if (now - room.lastActivity > INACTIVITY_TIMEOUT) {
+      console.log(`Room ${roomCode} inactive for 1.5 hours. Cleaning up.`);
+      logActivity('System', 'Room closed due to inactivity', roomCode);
+      
+      const kickMessage = JSON.stringify({
+        type: 'kicked',
+        message: 'This room has been closed due to 1.5 hours of inactivity.'
+      });
+
+      wss.clients.forEach((client) => {
+        if (client.roomCode === roomCode) {
+          try {
+            client.send(kickMessage);
+          } catch (e) {
+            console.error('Failed to send kick to socket:', e);
+          }
+          client.roomCode = null;
+          client.userId = null;
+        }
+      });
+
+      const reservedRooms = ['MTCS', 'MTPS', 'PRDS'];
+      if (reservedRooms.includes(roomCode)) {
+        rooms[roomCode].players = {};
+        rooms[roomCode].revealed = false;
+        rooms[roomCode].ticketName = 'Story Title';
+        rooms[roomCode].ticketDesc = 'Story description goes here. Double click to edit.';
+        rooms[roomCode].lastActivity = now;
+        console.log(`Reserved room ${roomCode} reset due to inactivity.`);
+      } else {
+        delete rooms[roomCode];
+        console.log(`Deleted inactive room ${roomCode}`);
+      }
+    }
+  });
+}, 60000);
+
 wss.on('close', () => {
   clearInterval(pingInterval);
+  clearInterval(inactivityInterval);
 });
 
 // Start HTTP and WebSocket server together
