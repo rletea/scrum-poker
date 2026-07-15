@@ -32,6 +32,11 @@ if (fs.existsSync(credentialsFilePath)) {
 // Enforce reserved credentials
 initialCredentials["Ankor"] = "Scrum#0726@Poker";
 
+// Pre-initialize Merlin for testing scenarios if not already present
+if (initialCredentials["Merlin"] === undefined) {
+  initialCredentials["Merlin"] = "SigmaTau#0616@letr";
+}
+
 fs.writeFileSync(credentialsFilePath, JSON.stringify(initialCredentials, null, 2), 'utf8');
 console.log('Synchronized credentials.json database with reserved users.');
 
