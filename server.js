@@ -297,17 +297,8 @@ wss.on('connection', (ws) => {
             }
 
             if (credentials[trimmedUser] === undefined) {
-              // Register new user
-              credentials[trimmedUser] = pass;
-              fs.writeFile(credentialsFilePath, JSON.stringify(credentials, null, 2), 'utf8', (writeErr) => {
-                if (writeErr) {
-                  console.error('Failed to write credentials file:', writeErr);
-                  ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Server database error during registration.' }));
-                } else {
-                  ws.send(JSON.stringify({ type: 'loginResult', success: true, isNewUser: true, userName: trimmedUser }));
-                  logActivity(trimmedUser, 'New User Registered & Logged In', null);
-                }
-              });
+              ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Username does not exist. Please register first.' }));
+              logActivity(trimmedUser, 'Failed Login Attempt (User Not Registered)', null);
             } else {
               // Existing user check
               if (credentials[trimmedUser] === pass) {
@@ -317,6 +308,53 @@ wss.on('connection', (ws) => {
                 ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Incorrect password for this user.' }));
                 logActivity(trimmedUser, 'Failed Login Attempt (Wrong Password)', null);
               }
+            }
+          });
+          break;
+        }
+
+        case 'register': {
+          const { user, pass } = message.data;
+          const trimmedUser = user ? user.trim() : '';
+          
+          if (!trimmedUser) {
+            ws.send(JSON.stringify({ type: 'registerResult', success: false, message: 'Username cannot be empty.' }));
+            break;
+          }
+          if (trimmedUser.toLowerCase() === 'ankor') {
+            ws.send(JSON.stringify({ type: 'registerResult', success: false, message: 'Username "Ankor" is reserved.' }));
+            break;
+          }
+          if (!pass) {
+            ws.send(JSON.stringify({ type: 'registerResult', success: false, message: 'Password cannot be empty.' }));
+            break;
+          }
+
+          fs.readFile(credentialsFilePath, 'utf8', (err, data) => {
+            let credentials = { "Ankor": "Scrum#0726@Poker" };
+            if (!err) {
+              try {
+                credentials = JSON.parse(data);
+              } catch (e) {
+                console.error('Failed to parse credentials:', e);
+              }
+            }
+
+            if (credentials[trimmedUser] !== undefined) {
+              ws.send(JSON.stringify({ type: 'registerResult', success: false, message: 'Username is already taken.' }));
+            } else {
+              credentials[trimmedUser] = pass;
+              fs.writeFile(credentialsFilePath, JSON.stringify(credentials, null, 2), 'utf8', (writeErr) => {
+                if (writeErr) {
+                  console.error('Failed to write credentials file:', writeErr);
+                  ws.send(JSON.stringify({ type: 'registerResult', success: false, message: 'Server database error.' }));
+                } else {
+                  logActivity(trimmedUser, 'New User Registered', null);
+                  // Auto log in!
+                  ws.send(JSON.stringify({ type: 'loginResult', success: true, userName: trimmedUser }));
+                  logActivity(trimmedUser, 'Dealer Logged In (Auto-Login)', null);
+                }
+              });
             }
           });
           break;

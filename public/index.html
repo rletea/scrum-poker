@@ -40,17 +40,45 @@
           <p class="subtitle poker-sub">Authenticate to open or manage Scrum poker tables</p>
         </header>
 
-        <form id="form-login" class="landing-form">
-          <div class="input-group">
-            <label for="login-user">Dealer User</label>
-            <input type="text" id="login-user" placeholder="Dealer name..." required autocomplete="off">
-          </div>
-          <div class="input-group">
-            <label for="login-pass">Table Password</label>
-            <input type="password" id="login-pass" placeholder="••••••••" required autocomplete="off">
-          </div>
-          <button type="submit" class="btn btn-primary btn-glow btn-gold">Enter Table</button>
-        </form>
+        <!-- Tabs control for Login screen -->
+        <div class="tabs-control login-tabs" style="margin-bottom: 1.5rem;">
+          <button id="tab-login-toggle" class="tab-btn active" style="flex: 1;">Log In</button>
+          <button id="tab-register-toggle" class="tab-btn" style="flex: 1;">Register</button>
+        </div>
+
+        <!-- Log In Form -->
+        <div id="login-form-container">
+          <form id="form-login" class="landing-form">
+            <div class="input-group">
+              <label for="login-user">Dealer User</label>
+              <input type="text" id="login-user" placeholder="Dealer name..." required autocomplete="off">
+            </div>
+            <div class="input-group">
+              <label for="login-pass">Table Password</label>
+              <input type="password" id="login-pass" placeholder="••••••••" required autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary btn-glow btn-gold" style="width: 100%;">Enter Table</button>
+          </form>
+        </div>
+
+        <!-- Register Form -->
+        <div id="register-form-container" class="hidden">
+          <form id="form-register" class="landing-form">
+            <div class="input-group">
+              <label for="register-user">Username</label>
+              <input type="text" id="register-user" placeholder="Choose a username..." required autocomplete="off">
+            </div>
+            <div class="input-group">
+              <label for="register-pass">Password</label>
+              <input type="password" id="register-pass" placeholder="Create a password..." required autocomplete="off">
+            </div>
+            <div class="input-group">
+              <label for="register-pass-confirm">Confirm Password</label>
+              <input type="password" id="register-pass-confirm" placeholder="Confirm your password..." required autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary btn-glow btn-gold" style="width: 100%;">Register Account</button>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -131,8 +159,8 @@
       </div>
 
       <!-- Dealer Logs Link (opens standalone logs.html) -->
-      <div id="dealer-logs-link-container" class="dealer-logs-link-container hidden" style="margin-top: 1.5rem; display: flex; justify-content: center; width: 100%; max-width: 480px;">
-        <a href="/logs.html" target="_blank" class="btn btn-gold btn-glow" style="width: 100%; text-align: center; text-decoration: none;">📜 View System Activity Logs</a>
+      <div id="dealer-logs-link-container" class="dealer-logs-link-container hidden" style="margin-top: 1.5rem; text-align: center; width: 100%; font-size: 0.85rem;">
+        <a href="/logs.html" target="_blank" style="color: var(--text-secondary); text-decoration: underline; transition: color 0.2s;">View System Activity Logs</a>
       </div>
     </section>
 

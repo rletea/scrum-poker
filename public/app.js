@@ -47,6 +47,17 @@ const formLogin = document.getElementById('form-login');
 const loginUserField = document.getElementById('login-user');
 const loginPassField = document.getElementById('login-pass');
 
+// Registration Elements
+const formRegister = document.getElementById('form-register');
+const registerUserField = document.getElementById('register-user');
+const registerPassField = document.getElementById('register-pass');
+const registerPassConfirmField = document.getElementById('register-pass-confirm');
+
+const tabLoginToggle = document.getElementById('tab-login-toggle');
+const tabRegisterToggle = document.getElementById('tab-register-toggle');
+const loginFormContainer = document.getElementById('login-form-container');
+const registerFormContainer = document.getElementById('register-form-container');
+
 // Logs & Password Elements
 const dealerLogsLinkContainer = document.getElementById('dealer-logs-link-container');
 const loggedInUsername = document.getElementById('logged-in-username');
@@ -128,7 +139,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Change Password Modal triggers
   if (btnOpenChangePw && changePwModal) {
     btnOpenChangePw.addEventListener('click', () => {
-      const currentUser = sessionStorage.getItem('userName') || 'Dealer';
+      const currentUser = localStorage.getItem('userName') || 'Dealer';
       if (currentUser === 'Ankor') {
         showToast('⚠️ Admin password cannot be changed.');
         return;
@@ -146,7 +157,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (formChangePassword) {
     formChangePassword.addEventListener('submit', (e) => {
       e.preventDefault();
-      const user = sessionStorage.getItem('userName') || 'Dealer';
+      const user = localStorage.getItem('userName') || 'Dealer';
       const oldPass = changeOldPass.value;
       const newPass = changeNewPass.value;
 
@@ -230,8 +241,8 @@ function setupFormSubmissions() {
     const deckType = createDeckSelect.value;
     const role = document.querySelector('input[name="create-role"]:checked').value;
     
-    sessionStorage.setItem('userName', name);
-    sessionStorage.setItem('userRole', role);
+    localStorage.setItem('userName', name);
+    localStorage.setItem('userRole', role);
     
     localName = name;
     localRole = role;
@@ -246,8 +257,8 @@ function setupFormSubmissions() {
     const code = joinCodeInput.value.trim().toUpperCase();
     const role = document.querySelector('input[name="join-role"]:checked').value;
     
-    sessionStorage.setItem('userName', name);
-    sessionStorage.setItem('userRole', role);
+    localStorage.setItem('userName', name);
+    localStorage.setItem('userRole', role);
     
     localName = name;
     localRole = role;
@@ -257,37 +268,85 @@ function setupFormSubmissions() {
 }
 
 function setupLoginHandler() {
-  if (!formLogin) return;
-  
-  formLogin.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const user = loginUserField.value.trim();
-    const pass = loginPassField.value;
-    
-    if (isWebSocketConnected && socket && socket.readyState === WebSocket.OPEN) {
-      sendMsg('login', { user, pass });
-    } else {
-      // Offline fallback validation
-      if (user === 'Ankor' && pass === 'Scrum#0726@Poker') {
-        sessionStorage.setItem('isLoggedIn', 'true');
-        showToast('🔑 Local Authentication successful!');
-        
-        loginUserField.value = '';
-        loginPassField.value = '';
-        
-        screenLogin.classList.add('hidden');
-        screenLanding.classList.remove('hidden');
+  // Toggle between Log In and Register tabs
+  if (tabLoginToggle && tabRegisterToggle && loginFormContainer && registerFormContainer) {
+    tabLoginToggle.addEventListener('click', () => {
+      tabLoginToggle.classList.add('active');
+      tabRegisterToggle.classList.remove('active');
+      loginFormContainer.classList.remove('hidden');
+      registerFormContainer.classList.add('hidden');
+    });
+
+    tabRegisterToggle.addEventListener('click', () => {
+      tabRegisterToggle.classList.add('active');
+      tabLoginToggle.classList.remove('active');
+      registerFormContainer.classList.remove('hidden');
+      loginFormContainer.classList.add('hidden');
+    });
+  }
+
+  // Handle Login submission
+  if (formLogin) {
+    formLogin.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const user = loginUserField.value.trim();
+      const pass = loginPassField.value;
+      
+      if (isWebSocketConnected && socket && socket.readyState === WebSocket.OPEN) {
+        sendMsg('login', { user, pass });
       } else {
-        showToast('❌ Invalid credentials (Local offline mode).');
+        // Offline fallback validation
+        if (user === 'Ankor' && pass === 'Scrum#0726@Poker') {
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userName', user);
+          showToast('🔑 Local Authentication successful!');
+          
+          loginUserField.value = '';
+          loginPassField.value = '';
+          
+          screenLogin.classList.add('hidden');
+          screenLanding.classList.remove('hidden');
+        } else {
+          showToast('❌ Invalid credentials (Local offline mode).');
+        }
       }
-    }
-  });
+    });
+  }
+
+  // Handle Register submission
+  if (formRegister) {
+    formRegister.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const user = registerUserField.value.trim();
+      const pass = registerPassField.value;
+      const passConfirm = registerPassConfirmField.value;
+
+      if (!user) {
+        showToast('⚠️ Username cannot be empty.');
+        return;
+      }
+      if (user.toLowerCase() === 'ankor') {
+        showToast('⚠️ Username "Ankor" is reserved.');
+        return;
+      }
+      if (pass !== passConfirm) {
+        showToast('❌ Passwords do not match.');
+        return;
+      }
+
+      if (isWebSocketConnected && socket && socket.readyState === WebSocket.OPEN) {
+        sendMsg('register', { user, pass });
+      } else {
+        showToast('❌ Registration is unavailable in offline local mode.');
+      }
+    });
+  }
 }
 
 function checkAuthAndHash() {
   const hash = window.location.hash.replace('#', '').trim();
-  const savedName = sessionStorage.getItem('userName');
-  const savedRole = sessionStorage.getItem('userRole') || 'estimator';
+  const savedName = localStorage.getItem('userName');
+  const savedRole = localStorage.getItem('userRole') || 'estimator';
   
   if (hash.length === 4) {
     // Shared Invite link bypasses login
@@ -319,7 +378,7 @@ function checkAuthAndHash() {
     }
   } else {
     // Normal link - check login status
-    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     if (isLoggedIn) {
       if (savedName) {
         joinNameInput.value = savedName;
@@ -338,7 +397,11 @@ function checkAuthAndHash() {
         loggedInUsername.textContent = savedName;
       }
       if (dealerLogsLinkContainer) {
-        dealerLogsLinkContainer.classList.remove('hidden');
+        if (savedName === 'Ankor') {
+          dealerLogsLinkContainer.classList.remove('hidden');
+        } else {
+          dealerLogsLinkContainer.classList.add('hidden');
+        }
       }
     } else {
       screenLogin.classList.remove('hidden');
@@ -516,14 +579,10 @@ function connectWebSocket() {
 
         case 'loginResult':
           if (message.success) {
-            sessionStorage.setItem('isLoggedIn', 'true');
-            sessionStorage.setItem('userName', message.userName);
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userName', message.userName);
             
-            if (message.isNewUser) {
-              showToast('🔑 Account created! Remember this password for your next login.');
-            } else {
-              showToast(`🔑 Authentication successful! Welcome, ${message.userName}.`);
-            }
+            showToast(`🔑 Authentication successful! Welcome, ${message.userName}.`);
             
             // Clear inputs
             loginUserField.value = '';
@@ -541,10 +600,20 @@ function connectWebSocket() {
             screenLanding.classList.remove('hidden');
             
             if (dealerLogsLinkContainer) {
-              dealerLogsLinkContainer.classList.remove('hidden');
+              if (message.userName === 'Ankor') {
+                dealerLogsLinkContainer.classList.remove('hidden');
+              } else {
+                dealerLogsLinkContainer.classList.add('hidden');
+              }
             }
           } else {
             showToast(`❌ ${message.message}`);
+          }
+          break;
+
+        case 'registerResult':
+          if (!message.success) {
+            showToast(`❌ Registration failed: ${message.message}`);
           }
           break;
 
@@ -561,7 +630,7 @@ function connectWebSocket() {
           window.location.hash = '';
           joinCodeInput.value = '';
           
-          sessionStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('isLoggedIn');
           updateCreateButtonState();
           
           localRoomCode = null;
@@ -809,7 +878,7 @@ function setupGameControls() {
     joinCodeInput.value = '';
     
     // Log out (clear login session storage)
-    sessionStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('isLoggedIn');
     updateCreateButtonState();
     
     // Reset client state

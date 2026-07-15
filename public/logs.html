@@ -11,9 +11,9 @@
   <link rel="stylesheet" href="style.css">
   
   <script>
-    // Route guard: only allow authenticated dealers to inspect logs
-    if (sessionStorage.getItem('isLoggedIn') !== 'true') {
-      alert('Access Denied. Please log in as a Dealer first.');
+    // Route guard: only allow the Administrator (Ankor) to inspect logs
+    if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('userName') !== 'Ankor') {
+      alert('Access Denied. Only the Administrator (Ankor) can view system logs.');
       window.location.href = '/';
     }
   </script>
