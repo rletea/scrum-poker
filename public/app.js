@@ -73,6 +73,7 @@ const changeNewPass = document.getElementById('change-new-pass');
 const dealerDeleteAccountContainer = document.getElementById('dealer-delete-account-container');
 const btnDeleteAccountLink = document.getElementById('btn-delete-account-link');
 const selectTheme = document.getElementById('select-theme');
+const logsModal = document.getElementById('logs-modal');
 
 // Forms & Inputs
 const tabCreate = document.getElementById('tab-create');
@@ -217,14 +218,13 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Handle Logs link open via JavaScript to show embedded logs card
+  // Handle Logs link open via JavaScript to show logs modal
   const logsLink = document.getElementById('btn-view-logs-link');
   if (logsLink) {
     logsLink.addEventListener('click', (e) => {
       e.preventDefault();
-      const embeddedLogsCard = document.getElementById('embedded-logs-card');
-      if (embeddedLogsCard) {
-        embeddedLogsCard.classList.remove('hidden');
+      if (logsModal) {
+        logsModal.classList.remove('hidden');
         sendMsg('requestLogs');
       }
     });
@@ -240,9 +240,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnHideLogs = document.getElementById('btn-hide-logs');
   if (btnHideLogs) {
     btnHideLogs.addEventListener('click', () => {
-      const embeddedLogsCard = document.getElementById('embedded-logs-card');
-      if (embeddedLogsCard) {
-        embeddedLogsCard.classList.add('hidden');
+      if (logsModal) {
+        logsModal.classList.add('hidden');
       }
     });
   }
@@ -512,9 +511,8 @@ function checkAuthAndHash() {
     if (dealerDeleteAccountContainer) {
       dealerDeleteAccountContainer.classList.add('hidden');
     }
-    const embeddedLogsCard = document.getElementById('embedded-logs-card');
-    if (embeddedLogsCard) {
-      embeddedLogsCard.classList.add('hidden');
+    if (logsModal) {
+      logsModal.classList.add('hidden');
     }
     
     if (savedName) {
@@ -585,9 +583,8 @@ function checkAuthAndHash() {
       if (dealerDeleteAccountContainer) {
         dealerDeleteAccountContainer.classList.add('hidden');
       }
-      const embeddedLogsCard = document.getElementById('embedded-logs-card');
-      if (embeddedLogsCard) {
-        embeddedLogsCard.classList.add('hidden');
+      if (logsModal) {
+        logsModal.classList.add('hidden');
       }
     }
   }
@@ -791,9 +788,8 @@ function connectWebSocket() {
               if (dealerLogsLinkContainer) dealerLogsLinkContainer.classList.add('hidden');
               if (dealerDeleteAccountContainer) dealerDeleteAccountContainer.classList.remove('hidden');
             }
-            const embeddedLogsCard = document.getElementById('embedded-logs-card');
-            if (embeddedLogsCard) {
-              embeddedLogsCard.classList.add('hidden');
+            if (logsModal) {
+              logsModal.classList.add('hidden');
             }
           } else {
             showToast(`❌ ${message.message}`);
@@ -908,9 +904,8 @@ function connectWebSocket() {
             if (dealerDeleteAccountContainer) {
               dealerDeleteAccountContainer.classList.add('hidden');
             }
-            const embeddedLogsCard = document.getElementById('embedded-logs-card');
-            if (embeddedLogsCard) {
-              embeddedLogsCard.classList.add('hidden');
+            if (logsModal) {
+              logsModal.classList.add('hidden');
             }
           } else {
             showToast(`❌ Failed to delete account: ${message.message}`);
@@ -946,9 +941,8 @@ function connectWebSocket() {
           if (dealerDeleteAccountContainer) {
             dealerDeleteAccountContainer.classList.add('hidden');
           }
-          const embeddedLogsCard = document.getElementById('embedded-logs-card');
-          if (embeddedLogsCard) {
-            embeddedLogsCard.classList.add('hidden');
+          if (logsModal) {
+            logsModal.classList.add('hidden');
           }
           break;
 
@@ -1211,9 +1205,8 @@ function setupGameControls() {
     if (dealerDeleteAccountContainer) {
       dealerDeleteAccountContainer.classList.add('hidden');
     }
-    const embeddedLogsCard = document.getElementById('embedded-logs-card');
-    if (embeddedLogsCard) {
-      embeddedLogsCard.classList.add('hidden');
+    if (logsModal) {
+      logsModal.classList.add('hidden');
     }
     
     // reset indicator text

@@ -190,40 +190,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Embedded Logs Card (only toggled/visible for Ankor) -->
-      <div id="embedded-logs-card" class="dealer-logs-card glass-poker hidden" style="max-width: 1200px !important; width: 100%; height: 60vh; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-        <header class="logs-header" style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
-          <div class="logs-header-title" style="display: flex; align-items: center; gap: 0.5rem;">
-            <span class="logo-icon" style="font-size: 1.75rem;">📜</span>
-            <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; color: #fff; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">System Activity Logs</h2>
-          </div>
-          <div style="display: flex; gap: 0.5rem;">
-            <button id="btn-refresh-logs" class="btn btn-secondary btn-xs" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Refresh Logs</button>
-            <button id="btn-hide-logs" class="btn btn-primary btn-xs btn-glow" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Hide Logs</button>
-          </div>
-        </header>
-        
-        <!-- Main content split: Logs on left, Users column on right -->
-        <div style="flex-grow: 1; display: flex; gap: 1.5rem; margin: 1.25rem 0; min-height: 0; align-items: stretch; width: 100%;">
-          <!-- System Activity Logs Container (Left) -->
-          <div id="logs-container" class="logs-container" style="flex: 1; background: rgba(3, 17, 10, 0.96); max-height: none; margin: 0; display: flex; flex-direction: column; border-radius: var(--radius-sm);">
-            <pre id="logs-content" class="logs-content" style="flex: 1; margin: 0; padding: 1rem; overflow-y: auto; white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; color: #adff2f; text-align: left;">Loading activity history...</pre>
-          </div>
-          
-          <!-- Registered Users Column (Right) -->
-          <div class="logs-users-column" style="width: 250px; background: rgba(3, 17, 10, 0.65); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: var(--radius-sm); display: flex; flex-direction: column; padding: 1.25rem; flex-shrink: 0; box-sizing: border-box; text-align: left;">
-            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #d4af37; margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 0.5rem; text-shadow: 0 0 4px rgba(212, 175, 55, 0.25);">Registered Users</h3>
-            <ul id="users-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.65rem; overflow-y: auto; flex-grow: 1;">
-              <!-- Populated dynamically -->
-            </ul>
-          </div>
-        </div>
-        
-        <footer style="flex-shrink: 0; text-align: center; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid rgba(212, 175, 55, 0.15); padding-top: 0.75rem; margin-top: 0.5rem;">
-          Scrum Poker Console logs are saved securely on the server.
-        </footer>
-      </div>
     </section>
 
     <!-- GAME ROOM SCREEN -->
@@ -390,6 +356,42 @@
           <button type="submit" class="btn btn-primary btn-gold btn-glow">Save Changes</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- System Activity Logs Modal (Ankor only) -->
+  <div id="logs-modal" class="modal-overlay hidden">
+    <div id="embedded-logs-card" class="dealer-logs-card glass-poker" style="max-width: 1200px !important; width: 90%; height: 80vh; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+      <header class="logs-header" style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+        <div class="logs-header-title" style="display: flex; align-items: center; gap: 0.5rem;">
+          <span class="logo-icon" style="font-size: 1.75rem;">📜</span>
+          <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; color: #fff; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">System Activity Logs</h2>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btn-refresh-logs" class="btn btn-secondary btn-xs" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Refresh Logs</button>
+          <button id="btn-hide-logs" class="btn btn-primary btn-xs btn-glow" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Hide Logs</button>
+        </div>
+      </header>
+      
+      <!-- Main content split: Logs on left, Users column on right -->
+      <div style="flex-grow: 1; display: flex; gap: 1.5rem; margin: 1.25rem 0; min-height: 0; align-items: stretch; width: 100%;">
+        <!-- System Activity Logs Container (Left) -->
+        <div id="logs-container" class="logs-container" style="flex: 1; background: rgba(3, 17, 10, 0.96); max-height: none; margin: 0; display: flex; flex-direction: column; border-radius: var(--radius-sm);">
+          <pre id="logs-content" class="logs-content" style="flex: 1; margin: 0; padding: 1rem; overflow-y: auto; white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; color: #adff2f; text-align: left;">Loading activity history...</pre>
+        </div>
+        
+        <!-- Registered Users Column (Right) -->
+        <div class="logs-users-column" style="width: 250px; background: rgba(3, 17, 10, 0.65); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: var(--radius-sm); display: flex; flex-direction: column; padding: 1.25rem; flex-shrink: 0; box-sizing: border-box; text-align: left;">
+          <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #d4af37; margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 0.5rem; text-shadow: 0 0 4px rgba(212, 175, 55, 0.25);">Registered Users</h3>
+          <ul id="users-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.65rem; overflow-y: auto; flex-grow: 1;">
+            <!-- Populated dynamically -->
+          </ul>
+        </div>
+      </div>
+      
+      <footer style="flex-shrink: 0; text-align: center; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid rgba(212, 175, 55, 0.15); padding-top: 0.75rem; margin-top: 0.5rem;">
+        Scrum Poker Console logs are saved securely on the server.
+      </footer>
     </div>
   </div>
 
