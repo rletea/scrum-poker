@@ -19,169 +19,86 @@ app.get('/', (req, res) => {
 });
 
 const logFilePath = path.join(__dirname, 'login_history.txt');
-const credentialsFilePath = path.join(__dirname, 'credentials.json');
-
 const { Pool } = require('pg');
 
 const databaseUrl = process.env.DATABASE_URL;
-let dbPool = null;
-
-if (databaseUrl) {
-  console.log('[DbDebug] DATABASE_URL detected, initializing PostgreSQL connection pool.');
-  dbPool = new Pool({
-    connectionString: databaseUrl,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  });
-} else {
-  console.log('[DbDebug] No DATABASE_URL environment variable found. Operating in local JSON file mode.');
+if (!databaseUrl) {
+  console.error('FATAL ERROR: DATABASE_URL environment variable is not defined.');
+  process.exit(1);
 }
 
-// Database Interface Layer (pg Pool + local JSON file fallback)
-async function initDatabase() {
-  if (dbPool) {
-    try {
-      // 1. Create table with email and last_active columns
-      await dbPool.query(`
-        CREATE TABLE IF NOT EXISTS users (
-          username VARCHAR(50) PRIMARY KEY,
-          password VARCHAR(255) NOT NULL,
-          email VARCHAR(100) UNIQUE NOT NULL,
-          last_active TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-      `);
-      console.log('[DbDebug] PostgreSQL table "users" is initialized.');
+const dbPool = new Pool({
+  connectionString: databaseUrl,
+  ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : {
+    rejectUnauthorized: false
+  }
+});
 
-      // 2. Insert reserved admin credentials if missing
-      await dbPool.query(`
-        INSERT INTO users (username, password, email, last_active)
-        VALUES ('Ankor', 'Scrum#0726@Poker', 'robert.letea@gmail.com', CURRENT_TIMESTAMP)
-        ON CONFLICT (username) DO NOTHING;
-      `);
-      // Update existing admin account email if it was previously set to ankor@scrumpoker.org
-      await dbPool.query(`
-        UPDATE users 
-        SET email = 'robert.letea@gmail.com' 
-        WHERE username = 'Ankor' AND email = 'ankor@scrumpoker.org';
-      `);
-      console.log('[DbDebug] PostgreSQL reserved user database is synchronized.');
-    } catch (err) {
-      console.error('[DbDebug] Failed to initialize PostgreSQL database:', err);
-    }
-  } else {
-    // JSON file mode: load/migrate structure
-    let creds = {};
-    if (fs.existsSync(credentialsFilePath)) {
-      try {
-        const fileContent = fs.readFileSync(credentialsFilePath, 'utf8');
-        const parsed = JSON.parse(fileContent);
-        // Migrate simple username: password string map to object map
-        for (const user of Object.keys(parsed)) {
-          if (typeof parsed[user] === 'string') {
-            creds[user] = {
-              password: parsed[user],
-              email: `${user.toLowerCase()}@scrumpoker.org`,
-              lastActive: new Date().toISOString()
-            };
-          } else {
-            creds[user] = parsed[user];
-          }
-        }
-      } catch (e) {
-        console.error('[DbDebug] Failed to load JSON credentials:', e);
-      }
-    }
-    // Enforce default accounts
-    creds["Ankor"] = {
-      password: "Scrum#0726@Poker",
-      email: "robert.letea@gmail.com",
-      lastActive: new Date().toISOString()
-    };
-    fs.writeFileSync(credentialsFilePath, JSON.stringify(creds, null, 2), 'utf8');
-    console.log('[DbDebug] Local JSON file credentials database synchronized.');
+// Database Interface Layer (pg Pool)
+async function initDatabase() {
+  try {
+    // 1. Create table with email and last_active columns
+    await dbPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        username VARCHAR(50) PRIMARY KEY,
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        last_active TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('[DbDebug] PostgreSQL table "users" is initialized.');
+
+    // 2. Insert reserved admin credentials if missing
+    await dbPool.query(`
+      INSERT INTO users (username, password, email, last_active)
+      VALUES ('Ankor', 'Scrum#0726@Poker', 'robert.letea@gmail.com', CURRENT_TIMESTAMP)
+      ON CONFLICT (username) DO NOTHING;
+    `);
+    // Update existing admin account email if it was previously set to ankor@scrumpoker.org
+    await dbPool.query(`
+      UPDATE users 
+      SET email = 'robert.letea@gmail.com' 
+      WHERE username = 'Ankor' AND email = 'ankor@scrumpoker.org';
+    `);
+    console.log('[DbDebug] PostgreSQL reserved user database is synchronized.');
+  } catch (err) {
+    console.error('[DbDebug] Failed to initialize PostgreSQL database:', err);
+    process.exit(1);
   }
 }
 
 // 6-Month Inactivity Sweeper
 async function runInactivitySweep() {
-  const cutoffDays = 180; // 6 months
   console.log('[InactivitySweep] Running account inactivity cleanup...');
-  if (dbPool) {
-    try {
-      const res = await dbPool.query(`
-        DELETE FROM users 
-        WHERE username != 'Ankor' 
-          AND last_active < NOW() - INTERVAL '180 days';
-      `);
-      console.log(`[InactivitySweep] PostgreSQL sweep finished. Deleted ${res.rowCount} inactive users.`);
-    } catch (err) {
-      console.error('[InactivitySweep] Failed executing PostgreSQL sweep:', err);
-    }
-  } else {
-    if (fs.existsSync(credentialsFilePath)) {
-      try {
-        const data = fs.readFileSync(credentialsFilePath, 'utf8');
-        const creds = JSON.parse(data);
-        const cutoffMs = Date.now() - (cutoffDays * 24 * 60 * 60 * 1000);
-        let deletedCount = 0;
-        for (const user of Object.keys(creds)) {
-          if (user === 'Ankor') continue;
-          const activeMs = new Date(creds[user].lastActive).getTime();
-          if (activeMs < cutoffMs) {
-            delete creds[user];
-            deletedCount++;
-          }
-        }
-        if (deletedCount > 0) {
-          fs.writeFileSync(credentialsFilePath, JSON.stringify(creds, null, 2), 'utf8');
-        }
-        console.log(`[InactivitySweep] Local JSON sweep finished. Deleted ${deletedCount} inactive users.`);
-      } catch (e) {
-        console.error('[InactivitySweep] Failed executing JSON sweep:', e);
-      }
-    }
+  try {
+    const res = await dbPool.query(`
+      DELETE FROM users 
+      WHERE username != 'Ankor' 
+        AND last_active < NOW() - INTERVAL '180 days';
+    `);
+    console.log(`[InactivitySweep] PostgreSQL sweep finished. Deleted ${res.rowCount} inactive users.`);
+  } catch (err) {
+    console.error('[InactivitySweep] Failed executing PostgreSQL sweep:', err);
   }
 }
 
 // Query Helpers
 async function findUser(username) {
   const trimmed = username ? username.trim() : '';
-  if (dbPool) {
-    try {
-      const res = await dbPool.query('SELECT * FROM users WHERE LOWER(username) = LOWER($1)', [trimmed]);
-      if (res.rows.length > 0) {
-        // Return object conforming to JSON file structure
-        const row = res.rows[0];
-        return {
-          username: row.username, // keep case
-          password: row.password,
-          email: row.email,
-          lastActive: row.last_active
-        };
-      }
-      return null;
-    } catch (err) {
-      console.error('[DbDebug] findUser error:', err);
-      return null;
+  try {
+    const res = await dbPool.query('SELECT * FROM users WHERE LOWER(username) = LOWER($1)', [trimmed]);
+    if (res.rows.length > 0) {
+      const row = res.rows[0];
+      return {
+        username: row.username,
+        password: row.password,
+        email: row.email,
+        lastActive: row.last_active
+      };
     }
-  } else {
-    // Local JSON
-    if (fs.existsSync(credentialsFilePath)) {
-      try {
-        const creds = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
-        // Case insensitive search
-        const matchKey = Object.keys(creds).find(k => k.toLowerCase() === trimmed.toLowerCase());
-        if (matchKey) {
-          return {
-            username: matchKey,
-            password: creds[matchKey].password,
-            email: creds[matchKey].email,
-            lastActive: creds[matchKey].lastActive
-          };
-        }
-      } catch (e) {}
-    }
+    return null;
+  } catch (err) {
+    console.error('[DbDebug] findUser error:', err);
     return null;
   }
 }
@@ -189,146 +106,66 @@ async function findUser(username) {
 async function registerUser(username, password, email) {
   const trimmed = username ? username.trim() : '';
   const emailTrim = email ? email.trim() : '';
-  
-  if (dbPool) {
-    try {
-      await dbPool.query(
-        'INSERT INTO users (username, password, email, last_active) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)',
-        [trimmed, password, emailTrim]
-      );
-      return { success: true };
-    } catch (err) {
-      console.error('[DbDebug] registerUser error:', err);
-      if (err.code === '23505') { // unique violation
-        if (err.detail && err.detail.includes('email')) {
-          return { success: false, message: 'Email address is already registered.' };
-        }
-        return { success: false, message: 'Username is already taken.' };
-      }
-      return { success: false, message: 'Database registration error.' };
-    }
-  } else {
-    // Local JSON
-    try {
-      const creds = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
-      // Check username conflict
-      const matchKey = Object.keys(creds).find(k => k.toLowerCase() === trimmed.toLowerCase());
-      if (matchKey) {
-        return { success: false, message: 'Username is already taken.' };
-      }
-      // Check email conflict
-      const emailConflict = Object.values(creds).find(v => v.email && v.email.toLowerCase() === emailTrim.toLowerCase());
-      if (emailConflict) {
+  try {
+    await dbPool.query(
+      'INSERT INTO users (username, password, email, last_active) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)',
+      [trimmed, password, emailTrim]
+    );
+    return { success: true };
+  } catch (err) {
+    console.error('[DbDebug] registerUser error:', err);
+    if (err.code === '23505') {
+      if (err.detail && err.detail.includes('email')) {
         return { success: false, message: 'Email address is already registered.' };
       }
-      
-      creds[trimmed] = {
-        password: password,
-        email: emailTrim,
-        lastActive: new Date().toISOString()
-      };
-      fs.writeFileSync(credentialsFilePath, JSON.stringify(creds, null, 2), 'utf8');
-      return { success: true };
-    } catch (err) {
-      console.error('[DbDebug] registerUser JSON error:', err);
-      return { success: false, message: 'Local storage write error.' };
+      return { success: false, message: 'Username is already taken.' };
     }
+    return { success: false, message: 'Database registration error.' };
   }
 }
 
 async function updateUserActivity(username) {
   const trimmed = username ? username.trim() : '';
-  if (dbPool) {
-    try {
-      await dbPool.query('UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE LOWER(username) = LOWER($1)', [trimmed]);
-    } catch (err) {
-      console.error('[DbDebug] updateUserActivity error:', err);
-    }
-  } else {
-    try {
-      const creds = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
-      const matchKey = Object.keys(creds).find(k => k.toLowerCase() === trimmed.toLowerCase());
-      if (matchKey) {
-        creds[matchKey].lastActive = new Date().toISOString();
-        fs.writeFileSync(credentialsFilePath, JSON.stringify(creds, null, 2), 'utf8');
-      }
-    } catch (e) {}
+  try {
+    await dbPool.query('UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE LOWER(username) = LOWER($1)', [trimmed]);
+  } catch (err) {
+    console.error('[DbDebug] updateUserActivity error:', err);
   }
 }
 
 async function changePassword(username, newPass) {
   const trimmed = username ? username.trim() : '';
-  if (dbPool) {
-    try {
-      await dbPool.query('UPDATE users SET password = $1, last_active = CURRENT_TIMESTAMP WHERE LOWER(username) = LOWER($2)', [newPass, trimmed]);
-      return { success: true };
-    } catch (err) {
-      console.error('[DbDebug] changePassword error:', err);
-      return { success: false, message: 'Database update failure.' };
-    }
-  } else {
-    try {
-      const creds = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
-      const matchKey = Object.keys(creds).find(k => k.toLowerCase() === trimmed.toLowerCase());
-      if (matchKey) {
-        creds[matchKey].password = newPass;
-        creds[matchKey].lastActive = new Date().toISOString();
-        fs.writeFileSync(credentialsFilePath, JSON.stringify(creds, null, 2), 'utf8');
-        return { success: true };
-      }
-      return { success: false, message: 'User not found in local files.' };
-    } catch (e) {
-      return { success: false, message: 'Local storage write error.' };
-    }
+  try {
+    await dbPool.query('UPDATE users SET password = $1, last_active = CURRENT_TIMESTAMP WHERE LOWER(username) = LOWER($2)', [newPass, trimmed]);
+    return { success: true };
+  } catch (err) {
+    console.error('[DbDebug] changePassword error:', err);
+    return { success: false, message: 'Database update failure.' };
   }
 }
 
 async function deleteUser(username) {
   const trimmed = username ? username.trim() : '';
-  if (dbPool) {
-    try {
-      await dbPool.query('DELETE FROM users WHERE LOWER(username) = LOWER($1)', [trimmed]);
-      return { success: true };
-    } catch (err) {
-      console.error('[DbDebug] deleteUser error:', err);
-      return { success: false, message: 'Database delete failure.' };
-    }
-  } else {
-    try {
-      const creds = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
-      const matchKey = Object.keys(creds).find(k => k.toLowerCase() === trimmed.toLowerCase());
-      if (matchKey) {
-        delete creds[matchKey];
-        fs.writeFileSync(credentialsFilePath, JSON.stringify(creds, null, 2), 'utf8');
-        return { success: true };
-      }
-      return { success: false, message: 'User not found in local files.' };
-    } catch (e) {
-      return { success: false, message: 'Local storage write error.' };
-    }
+  try {
+    await dbPool.query('DELETE FROM users WHERE LOWER(username) = LOWER($1)', [trimmed]);
+    return { success: true };
+  } catch (err) {
+    console.error('[DbDebug] deleteUser error:', err);
+    return { success: false, message: 'Database delete failure.' };
   }
 }
 
 async function getRegisteredUsers() {
-  if (dbPool) {
-    try {
-      const res = await dbPool.query('SELECT username FROM users ORDER BY username ASC');
-      return res.rows.map(r => r.username);
-    } catch (err) {
-      console.error('[DbDebug] getRegisteredUsers error:', err);
-      return ['Ankor', 'Merlin'];
-    }
-  } else {
-    try {
-      const creds = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
-      return Object.keys(creds).sort();
-    } catch (e) {
-      return ['Ankor', 'Merlin'];
-    }
+  try {
+    const res = await dbPool.query('SELECT username FROM users ORDER BY username ASC');
+    return res.rows.map(r => r.username);
+  } catch (err) {
+    console.error('[DbDebug] getRegisteredUsers error:', err);
+    return ['Ankor'];
   }
 }
 
-// Init Database table/json
+// Init Database table
 initDatabase().then(() => {
   // Execute inactivity sweep on boot
   runInactivitySweep();
