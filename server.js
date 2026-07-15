@@ -56,13 +56,14 @@ async function initDatabase() {
       // 2. Insert reserved admin credentials if missing
       await dbPool.query(`
         INSERT INTO users (username, password, email, last_active)
-        VALUES ('Ankor', 'Scrum#0726@Poker', 'ankor@scrumpoker.org', CURRENT_TIMESTAMP)
+        VALUES ('Ankor', 'Scrum#0726@Poker', 'robert.letea@gmail.com', CURRENT_TIMESTAMP)
         ON CONFLICT (username) DO NOTHING;
       `);
+      // Update existing admin account email if it was previously set to ankor@scrumpoker.org
       await dbPool.query(`
-        INSERT INTO users (username, password, email, last_active)
-        VALUES ('Merlin', 'SigmaTau#0616@letr', 'merlin@scrumpoker.org', CURRENT_TIMESTAMP)
-        ON CONFLICT (username) DO NOTHING;
+        UPDATE users 
+        SET email = 'robert.letea@gmail.com' 
+        WHERE username = 'Ankor' AND email = 'ankor@scrumpoker.org';
       `);
       console.log('[DbDebug] PostgreSQL reserved user database is synchronized.');
     } catch (err) {
@@ -94,16 +95,9 @@ async function initDatabase() {
     // Enforce default accounts
     creds["Ankor"] = {
       password: "Scrum#0726@Poker",
-      email: "ankor@scrumpoker.org",
+      email: "robert.letea@gmail.com",
       lastActive: new Date().toISOString()
     };
-    if (!creds["Merlin"]) {
-      creds["Merlin"] = {
-        password: "SigmaTau#0616@letr",
-        email: "merlin@scrumpoker.org",
-        lastActive: new Date().toISOString()
-      };
-    }
     fs.writeFileSync(credentialsFilePath, JSON.stringify(creds, null, 2), 'utf8');
     console.log('[DbDebug] Local JSON file credentials database synchronized.');
   }
