@@ -27,7 +27,7 @@
 /* Theme variables */
 body.theme-casino-green {
   --app-bg: radial-gradient(circle, #0e5c32 0%, #06311a 60%, #01140a 100%);
-  --card-bg: rgba(12, 60, 34, 0.85);
+  --card-bg: rgba(22, 61, 45, 0.92);
   --card-border: 10px solid #1c130e;
   --card-outline: 0 0 0 2px #d4af37, 0 10px 30px rgba(0, 0, 0, 0.5), 0 25px 60px rgba(0, 0, 0, 0.7);
   --btn-primary-bg: linear-gradient(135deg, #f9e394 0%, #d4af37 50%, #aa7c11 100%);
