@@ -32,8 +32,20 @@
       </div>
     </header>
 
-    <div id="logs-container" class="logs-container" style="flex-grow: 1; margin: 1rem 0; background: rgba(3, 17, 10, 0.96); max-height: none;">
-      <pre id="logs-content" class="logs-content">Loading activity history...</pre>
+    <!-- Main content split: Logs on left, Users column on right -->
+    <div style="flex-grow: 1; display: flex; gap: 1.5rem; margin: 1.25rem 0; min-height: 0; align-items: stretch; width: 100%;">
+      <!-- System Activity Logs Container (Left) -->
+      <div id="logs-container" class="logs-container" style="flex: 1; background: rgba(3, 17, 10, 0.96); max-height: none; margin: 0; display: flex; flex-direction: column; border-radius: var(--radius-sm);">
+        <pre id="logs-content" class="logs-content" style="flex: 1; margin: 0; padding: 1rem; overflow-y: auto;">Loading activity history...</pre>
+      </div>
+
+      <!-- Registered Users Column (Right) -->
+      <div class="logs-users-column" style="width: 250px; background: rgba(3, 17, 10, 0.65); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: var(--radius-sm); display: flex; flex-direction: column; padding: 1.25rem; flex-shrink: 0; box-sizing: border-box;">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #d4af37; margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 0.5rem; text-shadow: 0 0 4px rgba(212, 175, 55, 0.25);">Registered Users</h3>
+        <ul id="users-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.65rem; overflow-y: auto; flex-grow: 1;">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
     </div>
 
     <footer style="flex-shrink: 0; text-align: center; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid rgba(212, 175, 55, 0.15); padding-top: 0.75rem; margin-top: 0.5rem;">
@@ -69,6 +81,50 @@
           if (message.type === 'logs') {
             logsContent.textContent = message.data;
             logsContainer.scrollTop = logsContainer.scrollHeight;
+
+            if (message.users) {
+              const usersList = document.getElementById('users-list');
+              if (usersList) {
+                usersList.innerHTML = '';
+                message.users.forEach(user => {
+                  const li = document.createElement('li');
+                  li.style.color = '#fff';
+                  li.style.fontSize = '0.88rem';
+                  li.style.padding = '0.4rem 0.6rem';
+                  li.style.background = 'rgba(255,255,255,0.05)';
+                  li.style.borderRadius = '4px';
+                  li.style.display = 'flex';
+                  li.style.justifyContent = 'space-between';
+                  li.style.alignItems = 'center';
+                  li.style.border = '1px solid rgba(255,255,255,0.03)';
+                  
+                  const nameSpan = document.createElement('span');
+                  nameSpan.textContent = user;
+                  nameSpan.style.fontFamily = "'Inter', sans-serif";
+                  li.appendChild(nameSpan);
+                  
+                  const roleSpan = document.createElement('span');
+                  roleSpan.textContent = user === 'Ankor' ? 'Admin' : 'Dealer';
+                  roleSpan.style.fontSize = '0.65rem';
+                  roleSpan.style.padding = '2px 6px';
+                  roleSpan.style.borderRadius = '3px';
+                  roleSpan.style.fontWeight = 'bold';
+                  roleSpan.style.textTransform = 'uppercase';
+                  
+                  if (user === 'Ankor') {
+                    roleSpan.style.background = '#d4af37';
+                    roleSpan.style.color = '#000';
+                    roleSpan.style.boxShadow = '0 0 5px rgba(212,175,55,0.3)';
+                  } else {
+                    roleSpan.style.background = 'rgba(255,255,255,0.1)';
+                    roleSpan.style.color = '#ccc';
+                  }
+                  li.appendChild(roleSpan);
+                  
+                  usersList.appendChild(li);
+                });
+              }
+            }
           }
         } catch (e) {
           console.error('Failed to parse logs message:', e);

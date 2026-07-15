@@ -21,14 +21,20 @@ app.get('/', (req, res) => {
 const logFilePath = path.join(__dirname, 'login_history.txt');
 const credentialsFilePath = path.join(__dirname, 'credentials.json');
 
-// Initialize credentials.json if it doesn't exist
-if (!fs.existsSync(credentialsFilePath)) {
-  const initialCredentials = {
-    "Ankor": "Scrum#0726@Poker"
-  };
-  fs.writeFileSync(credentialsFilePath, JSON.stringify(initialCredentials, null, 2), 'utf8');
-  console.log('Created credentials.json with default admin credentials.');
+let initialCredentials = {
+  "Ankor": "Scrum#0726@Poker",
+  "Merlin": "Merlin#0726@Poker"
+};
+if (fs.existsSync(credentialsFilePath)) {
+  try {
+    const existing = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
+    initialCredentials = { ...initialCredentials, ...existing };
+  } catch (e) {
+    console.error('Failed to parse existing credentials:', e);
+  }
 }
+fs.writeFileSync(credentialsFilePath, JSON.stringify(initialCredentials, null, 2), 'utf8');
+console.log('Synchronized credentials.json database.');
 
 function logActivity(userName, action, roomCode) {
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'UTC' }) + ' UTC';
@@ -404,12 +410,20 @@ wss.on('connection', (ws) => {
         }
 
         case 'getLogs': {
-          fs.readFile(logFilePath, 'utf8', (err, data) => {
-            if (err) {
-              ws.send(JSON.stringify({ type: 'logs', data: 'No activity logs found.' }));
-            } else {
-              ws.send(JSON.stringify({ type: 'logs', data: data }));
+          fs.readFile(credentialsFilePath, 'utf8', (credErr, credData) => {
+            let users = ['Ankor', 'Merlin'];
+            if (!credErr) {
+              try {
+                users = Object.keys(JSON.parse(credData));
+              } catch (e) {}
             }
+            fs.readFile(logFilePath, 'utf8', (err, data) => {
+              if (err) {
+                ws.send(JSON.stringify({ type: 'logs', data: 'No activity logs found.', users }));
+              } else {
+                ws.send(JSON.stringify({ type: 'logs', data: data, users }));
+              }
+            });
           });
           break;
         }
