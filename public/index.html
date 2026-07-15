@@ -91,10 +91,6 @@
             <h1>Scrum Poker</h1>
           </div>
           <p class="subtitle">Estimate user stories efficiently with your team, anywhere.</p>
-          <div id="user-profile-bar" class="user-profile-bar hidden">
-            <span>Welcome, <strong id="logged-in-username">Dealer</strong></span>
-            <button id="btn-open-change-pw" class="btn btn-secondary btn-xs" style="margin-left: 0.5rem;">Change Password</button>
-          </div>
         </header>
 
         <div class="tabs-control">
@@ -156,11 +152,20 @@
           </div>
           <button type="submit" class="btn btn-primary btn-glow">Join Room</button>
         </form>
-      </div>
 
-      <!-- Dealer Logs Link (opens standalone logs.html) -->
-      <div id="dealer-logs-link-container" class="dealer-logs-link-container hidden" style="margin-top: 1.5rem; text-align: center; width: 100%; font-size: 0.85rem;">
-        <a href="/logs.html" target="_blank" style="color: var(--text-secondary); text-decoration: underline; transition: color 0.2s;">View System Activity Logs</a>
+        <!-- Discrete Profile & Logs Footer -->
+        <div id="user-profile-bar" class="user-profile-bar hidden" style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; width: 100%;">
+          <!-- Left side: Welcome & Change Password link -->
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span>Welcome, <strong id="logged-in-username">Dealer</strong></span>
+            <span style="color: rgba(255,255,255,0.25);">|</span>
+            <a href="#" id="btn-open-change-pw" style="color: var(--text-secondary); text-decoration: underline; transition: color 0.2s;">Change Password</a>
+          </div>
+          <!-- Right side: View System Activity Logs (only visible to Ankor) -->
+          <div id="dealer-logs-link-container" class="hidden">
+            <a href="/logs.html" target="_blank" style="color: var(--text-secondary); text-decoration: underline; transition: color 0.2s;">View System Activity Logs</a>
+          </div>
+        </div>
       </div>
     </section>
 
