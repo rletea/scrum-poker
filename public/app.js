@@ -72,8 +72,14 @@ const changeOldPass = document.getElementById('change-old-pass');
 const changeNewPass = document.getElementById('change-new-pass');
 const dealerDeleteAccountContainer = document.getElementById('dealer-delete-account-container');
 const btnDeleteAccountLink = document.getElementById('btn-delete-account-link');
-const selectTheme = document.getElementById('select-theme');
+const themeSelects = document.querySelectorAll('.theme-select-sync');
 const logsModal = document.getElementById('logs-modal');
+
+function syncThemeSelects(value) {
+  themeSelects.forEach(sel => {
+    sel.value = value;
+  });
+}
 
 // Forms & Inputs
 const tabCreate = document.getElementById('tab-create');
@@ -246,15 +252,18 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (selectTheme) {
+  if (themeSelects.length > 0) {
     // Set initial select value from body class
     const initialTheme = document.body.classList.contains('theme-glassmorphic') ? 'glassmorphic' : 'casino-green';
-    selectTheme.value = initialTheme;
+    syncThemeSelects(initialTheme);
 
-    selectTheme.addEventListener('change', () => {
-      const themeVal = selectTheme.value;
-      document.body.className = `theme-${themeVal}`;
-      localStorage.setItem('selectedTheme', themeVal);
+    themeSelects.forEach(sel => {
+      sel.addEventListener('change', () => {
+        const themeVal = sel.value;
+        document.body.className = `theme-${themeVal}`;
+        localStorage.setItem('selectedTheme', themeVal);
+        syncThemeSelects(themeVal);
+      });
     });
   }
 });
@@ -485,9 +494,7 @@ function checkAuthAndHash() {
   
   // Apply active theme
   document.body.className = `theme-${activeTheme}`;
-  if (selectTheme) {
-    selectTheme.value = activeTheme;
-  }
+  syncThemeSelects(activeTheme);
 
   const savedName = sessionStorage.getItem('userName');
   const savedRole = sessionStorage.getItem('userRole') || 'estimator';
