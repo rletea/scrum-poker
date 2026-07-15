@@ -40,6 +40,8 @@ body.theme-casino-green {
   --chip-display: flex;
   --input-border: rgba(212, 175, 55, 0.25);
   --input-bg: rgba(3, 17, 10, 0.85);
+  --glass-border: 1px solid rgba(212, 175, 55, 0.2);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(212, 175, 55, 0.1);
 }
 
 body.theme-glassmorphic {
@@ -57,6 +59,8 @@ body.theme-glassmorphic {
   --chip-display: none;
   --input-border: rgba(255, 255, 255, 0.1);
   --input-bg: rgba(0, 0, 0, 0.3);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 * {
@@ -118,12 +122,13 @@ body {
    -------------------------------------------------------------------------- */
 
 .glass {
-  background: var(--panel-bg);
+  background: var(--card-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
+  border: var(--glass-border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s ease;
 }
 
 .glass-inset {
