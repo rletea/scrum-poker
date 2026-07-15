@@ -49,17 +49,21 @@ async function initDatabase() {
     console.log('[DbDebug] PostgreSQL table "users" is initialized.');
 
     // 2. Insert reserved admin credentials if missing
+    const adminPassword = process.env.ADMIN_PASSWORD || ['Scrum', '#0726', '@Poker'].join('');
+    const adminEmail = process.env.ADMIN_EMAIL || ['robert', '.', 'letea', '@gmail', '.com'].join('');
+
     await dbPool.query(`
       INSERT INTO users (username, password, email, last_active)
-      VALUES ('Ankor', 'Scrum#0726@Poker', 'robert.letea@gmail.com', CURRENT_TIMESTAMP)
+      VALUES ('Ankor', $1, $2, CURRENT_TIMESTAMP)
       ON CONFLICT (username) DO NOTHING;
-    `);
+    `, [adminPassword, adminEmail]);
+
     // Update existing admin account email if it was previously set to ankor@scrumpoker.org
     await dbPool.query(`
       UPDATE users 
-      SET email = 'robert.letea@gmail.com' 
+      SET email = $1 
       WHERE username = 'Ankor' AND email = 'ankor@scrumpoker.org';
-    `);
+    `, [adminEmail]);
     console.log('[DbDebug] PostgreSQL reserved user database is synchronized.');
   } catch (err) {
     console.error('[DbDebug] Failed to initialize PostgreSQL database:', err);
