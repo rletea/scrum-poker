@@ -217,12 +217,33 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Handle Logs link open via JavaScript to clone sessionStorage to new tab
-  const logsLink = dealerLogsLinkContainer ? dealerLogsLinkContainer.querySelector('a') : null;
+  // Handle Logs link open via JavaScript to show embedded logs card
+  const logsLink = document.getElementById('btn-view-logs-link');
   if (logsLink) {
     logsLink.addEventListener('click', (e) => {
       e.preventDefault();
-      window.open('/logs.html', '_blank');
+      const embeddedLogsCard = document.getElementById('embedded-logs-card');
+      if (embeddedLogsCard) {
+        embeddedLogsCard.classList.remove('hidden');
+        sendMsg('requestLogs');
+      }
+    });
+  }
+
+  const btnRefreshLogs = document.getElementById('btn-refresh-logs');
+  if (btnRefreshLogs) {
+    btnRefreshLogs.addEventListener('click', () => {
+      sendMsg('requestLogs');
+    });
+  }
+
+  const btnHideLogs = document.getElementById('btn-hide-logs');
+  if (btnHideLogs) {
+    btnHideLogs.addEventListener('click', () => {
+      const embeddedLogsCard = document.getElementById('embedded-logs-card');
+      if (embeddedLogsCard) {
+        embeddedLogsCard.classList.add('hidden');
+      }
     });
   }
 
@@ -491,6 +512,10 @@ function checkAuthAndHash() {
     if (dealerDeleteAccountContainer) {
       dealerDeleteAccountContainer.classList.add('hidden');
     }
+    const embeddedLogsCard = document.getElementById('embedded-logs-card');
+    if (embeddedLogsCard) {
+      embeddedLogsCard.classList.add('hidden');
+    }
     
     if (savedName) {
       joinNameInput.value = savedName;
@@ -559,6 +584,10 @@ function checkAuthAndHash() {
       }
       if (dealerDeleteAccountContainer) {
         dealerDeleteAccountContainer.classList.add('hidden');
+      }
+      const embeddedLogsCard = document.getElementById('embedded-logs-card');
+      if (embeddedLogsCard) {
+        embeddedLogsCard.classList.add('hidden');
       }
     }
   }
@@ -762,6 +791,10 @@ function connectWebSocket() {
               if (dealerLogsLinkContainer) dealerLogsLinkContainer.classList.add('hidden');
               if (dealerDeleteAccountContainer) dealerDeleteAccountContainer.classList.remove('hidden');
             }
+            const embeddedLogsCard = document.getElementById('embedded-logs-card');
+            if (embeddedLogsCard) {
+              embeddedLogsCard.classList.add('hidden');
+            }
           } else {
             showToast(`❌ ${message.message}`);
           }
@@ -781,6 +814,60 @@ function connectWebSocket() {
             showToast(`❌ Registration failed: ${message.message}`);
           }
           break;
+
+        case 'logs': {
+          const logsContent = document.getElementById('logs-content');
+          const logsContainer = document.getElementById('logs-container');
+          if (logsContent) {
+            logsContent.textContent = message.data;
+          }
+          if (logsContainer) {
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+          }
+          
+          const usersList = document.getElementById('users-list');
+          if (usersList && message.users) {
+            usersList.innerHTML = '';
+            message.users.forEach(user => {
+              const li = document.createElement('li');
+              li.style.color = '#fff';
+              li.style.fontSize = '0.88rem';
+              li.style.padding = '0.4rem 0.6rem';
+              li.style.background = 'rgba(255,255,255,0.05)';
+              li.style.borderRadius = '4px';
+              li.style.display = 'flex';
+              li.style.justifyContent = 'space-between';
+              li.style.alignItems = 'center';
+              li.style.border = '1px solid rgba(255,255,255,0.03)';
+              li.style.marginBottom = '0.5rem';
+              
+              const nameSpan = document.createElement('span');
+              nameSpan.textContent = user;
+              nameSpan.style.fontFamily = "'Inter', sans-serif";
+              li.appendChild(nameSpan);
+              
+              const roleSpan = document.createElement('span');
+              roleSpan.textContent = user === 'Ankor' ? 'Admin' : 'Dealer';
+              roleSpan.style.fontSize = '0.65rem';
+              roleSpan.style.padding = '2px 6px';
+              roleSpan.style.borderRadius = '3px';
+              roleSpan.style.fontWeight = 'bold';
+              roleSpan.style.textTransform = 'uppercase';
+              
+              if (user === 'Ankor') {
+                roleSpan.style.background = '#d4af37';
+                roleSpan.style.color = '#000';
+                roleSpan.style.boxShadow = '0 0 5px rgba(212,175,55,0.3)';
+              } else {
+                roleSpan.style.background = 'rgba(255,255,255,0.1)';
+                roleSpan.style.color = '#ccc';
+              }
+              li.appendChild(roleSpan);
+              usersList.appendChild(li);
+            });
+          }
+          break;
+        }
 
         case 'changePasswordResult':
           if (message.success) {
@@ -821,6 +908,10 @@ function connectWebSocket() {
             if (dealerDeleteAccountContainer) {
               dealerDeleteAccountContainer.classList.add('hidden');
             }
+            const embeddedLogsCard = document.getElementById('embedded-logs-card');
+            if (embeddedLogsCard) {
+              embeddedLogsCard.classList.add('hidden');
+            }
           } else {
             showToast(`❌ Failed to delete account: ${message.message}`);
           }
@@ -854,6 +945,10 @@ function connectWebSocket() {
           }
           if (dealerDeleteAccountContainer) {
             dealerDeleteAccountContainer.classList.add('hidden');
+          }
+          const embeddedLogsCard = document.getElementById('embedded-logs-card');
+          if (embeddedLogsCard) {
+            embeddedLogsCard.classList.add('hidden');
           }
           break;
 
@@ -1115,6 +1210,10 @@ function setupGameControls() {
     }
     if (dealerDeleteAccountContainer) {
       dealerDeleteAccountContainer.classList.add('hidden');
+    }
+    const embeddedLogsCard = document.getElementById('embedded-logs-card');
+    if (embeddedLogsCard) {
+      embeddedLogsCard.classList.add('hidden');
     }
     
     // reset indicator text
