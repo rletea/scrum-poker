@@ -287,11 +287,15 @@ wss.on('connection', (ws) => {
           const { user, pass } = message.data;
           const trimmedUser = user ? user.trim() : '';
           
+          console.log(`[AuthDebug] Login request for user: "${trimmedUser}" with password length: ${pass ? pass.length : 0}`);
+
           if (!trimmedUser) {
+            console.log('[AuthDebug] Login failed: Username is empty.');
             ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Username cannot be empty.' }));
             break;
           }
           if (!pass) {
+            console.log('[AuthDebug] Login failed: Password is empty.');
             ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Password cannot be empty.' }));
             break;
           }
@@ -302,19 +306,24 @@ wss.on('connection', (ws) => {
               try {
                 credentials = JSON.parse(data);
               } catch (e) {
-                console.error('Failed to parse credentials:', e);
+                console.error('[AuthDebug] Failed to parse credentials file:', e);
               }
             }
 
-            if (credentials[trimmedUser] === undefined) {
+            const expectedPass = credentials[trimmedUser];
+            console.log(`[AuthDebug] Database lookup for "${trimmedUser}": ${expectedPass !== undefined ? 'Found user' : 'User not found'}`);
+
+            if (expectedPass === undefined) {
+              console.log(`[AuthDebug] Login failed: User "${trimmedUser}" does not exist in database.`);
               ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Username does not exist. Please register first.' }));
               logActivity(trimmedUser, 'Failed Login Attempt (User Not Registered)', null);
             } else {
-              // Existing user check
-              if (credentials[trimmedUser] === pass) {
+              if (expectedPass === pass) {
+                console.log(`[AuthDebug] Login successful for user "${trimmedUser}".`);
                 ws.send(JSON.stringify({ type: 'loginResult', success: true, userName: trimmedUser }));
                 logActivity(trimmedUser, 'Dealer Logged In', null);
               } else {
+                console.log(`[AuthDebug] Login failed for user "${trimmedUser}": Incorrect password.`);
                 ws.send(JSON.stringify({ type: 'loginResult', success: false, message: 'Incorrect password for this user.' }));
                 logActivity(trimmedUser, 'Failed Login Attempt (Wrong Password)', null);
               }
