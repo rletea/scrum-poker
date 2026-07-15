@@ -91,6 +91,9 @@
             <h1>Scrum Poker</h1>
           </div>
           <p class="subtitle">Estimate user stories efficiently with your team, anywhere.</p>
+          <div id="user-header-greeting" class="user-header-greeting hidden" style="margin-top: 0.75rem; font-size: 0.95rem; text-align: center; color: var(--text-secondary);">
+            Welcome, <strong id="logged-in-username" style="color: #fff; text-shadow: 0 0 5px rgba(212, 175, 55, 0.4);">Dealer</strong>
+          </div>
         </header>
 
         <div class="tabs-control">
@@ -155,10 +158,8 @@
 
         <!-- Discrete Profile & Logs Footer -->
         <div id="user-profile-bar" class="user-profile-bar hidden" style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; width: 100%;">
-          <!-- Left side: Welcome & Change Password link -->
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <span>Welcome, <strong id="logged-in-username">Dealer</strong></span>
-            <span style="color: rgba(255,255,255,0.25);">|</span>
+          <!-- Left side: Change Password link -->
+          <div>
             <a href="#" id="btn-open-change-pw" style="color: var(--text-secondary); text-decoration: underline; transition: color 0.2s;">Change Password</a>
           </div>
           <!-- Right side: View System Activity Logs (only visible to Ankor) -->

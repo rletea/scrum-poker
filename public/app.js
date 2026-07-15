@@ -59,6 +59,7 @@ const loginFormContainer = document.getElementById('login-form-container');
 const registerFormContainer = document.getElementById('register-form-container');
 
 // Logs & Password Elements
+const userHeaderGreeting = document.getElementById('user-header-greeting');
 const userProfileBar = document.getElementById('user-profile-bar');
 const dealerLogsLinkContainer = document.getElementById('dealer-logs-link-container');
 const loggedInUsername = document.getElementById('logged-in-username');
@@ -382,6 +383,9 @@ function checkAuthAndHash() {
     tabJoin.click();
     updateCreateButtonState();
     
+    if (userHeaderGreeting) {
+      userHeaderGreeting.classList.add('hidden');
+    }
     if (userProfileBar) {
       userProfileBar.classList.add('hidden');
     }
@@ -424,6 +428,9 @@ function checkAuthAndHash() {
       screenLanding.classList.remove('hidden');
       screenGame.classList.add('hidden');
       
+      if (userHeaderGreeting) {
+        userHeaderGreeting.classList.remove('hidden');
+      }
       if (userProfileBar) {
         userProfileBar.classList.remove('hidden');
       }
@@ -441,6 +448,9 @@ function checkAuthAndHash() {
       screenLogin.classList.remove('hidden');
       screenLanding.classList.add('hidden');
       screenGame.classList.add('hidden');
+      if (userHeaderGreeting) {
+        userHeaderGreeting.classList.add('hidden');
+      }
       if (userProfileBar) {
         userProfileBar.classList.add('hidden');
       }
@@ -631,6 +641,9 @@ function connectWebSocket() {
             if (loggedInUsername) {
               loggedInUsername.textContent = message.userName;
             }
+            if (userHeaderGreeting) {
+              userHeaderGreeting.classList.remove('hidden');
+            }
             if (userProfileBar) {
               userProfileBar.classList.remove('hidden');
             }
@@ -682,6 +695,9 @@ function connectWebSocket() {
           screenGame.classList.add('hidden');
           screenLogin.classList.remove('hidden');
           
+          if (userHeaderGreeting) {
+            userHeaderGreeting.classList.add('hidden');
+          }
           if (userProfileBar) {
             userProfileBar.classList.add('hidden');
           }
@@ -937,6 +953,9 @@ function setupGameControls() {
     screenGame.classList.add('hidden');
     screenLogin.classList.remove('hidden');
     
+    if (userHeaderGreeting) {
+      userHeaderGreeting.classList.add('hidden');
+    }
     if (userProfileBar) {
       userProfileBar.classList.add('hidden');
     }
