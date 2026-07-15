@@ -141,8 +141,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (btnOpenChangePw && changePwModal) {
     btnOpenChangePw.addEventListener('click', () => {
       const currentUser = sessionStorage.getItem('userName') || 'Dealer';
-      if (currentUser === 'Ankor') {
-        showToast('⚠️ Admin password cannot be changed.');
+      if (currentUser === 'Ankor' || currentUser === 'Merlin') {
+        showToast('⚠️ Reserved user passwords cannot be changed.');
         return;
       }
       changePwModal.classList.remove('hidden');

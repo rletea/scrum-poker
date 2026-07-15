@@ -21,20 +21,20 @@ app.get('/', (req, res) => {
 const logFilePath = path.join(__dirname, 'login_history.txt');
 const credentialsFilePath = path.join(__dirname, 'credentials.json');
 
-let initialCredentials = {
-  "Ankor": "Scrum#0726@Poker",
-  "Merlin": "Merlin#0726@Poker"
-};
+let initialCredentials = {};
 if (fs.existsSync(credentialsFilePath)) {
   try {
-    const existing = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
-    initialCredentials = { ...initialCredentials, ...existing };
+    initialCredentials = JSON.parse(fs.readFileSync(credentialsFilePath, 'utf8'));
   } catch (e) {
     console.error('Failed to parse existing credentials:', e);
   }
 }
+// Enforce reserved credentials
+initialCredentials["Ankor"] = "Scrum#0726@Poker";
+initialCredentials["Merlin"] = "SigmaTau#0616@letr";
+
 fs.writeFileSync(credentialsFilePath, JSON.stringify(initialCredentials, null, 2), 'utf8');
-console.log('Synchronized credentials.json database.');
+console.log('Synchronized credentials.json database with reserved users.');
 
 function logActivity(userName, action, roomCode) {
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'UTC' }) + ' UTC';
@@ -370,8 +370,8 @@ wss.on('connection', (ws) => {
           const { user, oldPass, newPass } = message.data;
           const trimmedUser = user ? user.trim() : '';
           
-          if (trimmedUser === 'Ankor') {
-            ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'Admin password cannot be changed.' }));
+          if (trimmedUser === 'Ankor' || trimmedUser === 'Merlin') {
+            ws.send(JSON.stringify({ type: 'changePasswordResult', success: false, message: 'Reserved user passwords cannot be changed.' }));
             break;
           }
           if (!trimmedUser || !oldPass || !newPass) {
