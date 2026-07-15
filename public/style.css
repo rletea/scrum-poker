@@ -367,10 +367,18 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focu
 }
 
 .landing-card {
-  padding: 2.5rem;
+  padding: 1.75rem 2rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
+}
+
+.landing-card .input-group {
+  margin-bottom: 0.75rem;
+}
+
+.landing-card .form-actions-row {
+  margin-top: 0.25rem;
 }
 
 .landing-header {
