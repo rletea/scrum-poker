@@ -48,8 +48,8 @@ body.theme-casino-green {
 body.theme-glassmorphic {
   --app-bg: radial-gradient(circle at 50% 50%, #1c1936 0%, #0c0919 100%);
   --card-bg: rgba(22, 21, 38, 0.7);
-  --card-border: 1px solid rgba(255, 255, 255, 0.08);
-  --card-outline: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 1px rgba(255,255,255,0.1);
+  --card-border: 1px solid rgba(212, 175, 55, 0.2);
+  --card-outline: 0 0 0 10px #1c130e, 0 0 0 12px #d4af37, 0 10px 30px rgba(0, 0, 0, 0.5), 0 25px 60px rgba(0, 0, 0, 0.7);
   --btn-primary-bg: linear-gradient(135deg, #7c4dff 0%, #651fff 100%);
   --btn-primary-color: #ffffff;
   --btn-primary-border: 1px solid rgba(255, 255, 255, 0.1);
@@ -57,7 +57,7 @@ body.theme-glassmorphic {
   --border-focus: #7c4dff;
   --focus-shadow: 0 0 12px rgba(124, 77, 255, 0.4);
   --accent-color: #9e75ff;
-  --chip-display: none;
+  --chip-display: flex;
   --input-border: rgba(255, 255, 255, 0.1);
   --input-bg: rgba(0, 0, 0, 0.3);
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
