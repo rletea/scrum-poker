@@ -148,6 +148,20 @@ window.addEventListener('DOMContentLoaded', () => {
   updateCreateButtonState();
   setupBroadcastHeartbeat();
   setupUnloadHandlers();
+
+  // My Room — Enter button
+  const btnEnterMyRoom = document.getElementById('btn-enter-my-room');
+  if (btnEnterMyRoom) {
+    btnEnterMyRoom.addEventListener('click', () => {
+      const roomCode = sessionStorage.getItem('userRoomCode');
+      const name = sessionStorage.getItem('userName') || '';
+      const role = sessionStorage.getItem('userRole') || 'estimator';
+      if (!roomCode) return;
+      localName = name;
+      localRole = role;
+      joinRoom(roomCode, name, role, null);
+    });
+  }
   
   // Change Password Modal triggers
   if (btnOpenChangePw && changePwModal) {
@@ -190,6 +204,8 @@ window.addEventListener('DOMContentLoaded', () => {
       sessionStorage.removeItem('isLoggedIn');
       sessionStorage.removeItem('userName');
       sessionStorage.removeItem('userRole');
+      sessionStorage.removeItem('userRoomCode');
+      updateMyRoomBadge(null);
       updateCreateButtonState();
       
       screenLanding.classList.add('hidden');
@@ -574,6 +590,10 @@ function checkAuthAndHash() {
         if (dealerLogsLinkContainer) dealerLogsLinkContainer.classList.add('hidden');
         if (dealerDeleteAccountContainer) dealerDeleteAccountContainer.classList.remove('hidden');
       }
+      
+      // Restore My Room badge from sessionStorage on page reload
+      const savedRoomCode = sessionStorage.getItem('userRoomCode');
+      updateMyRoomBadge(savedRoomCode);
     } else {
       screenLogin.classList.remove('hidden');
       screenLanding.classList.add('hidden');
@@ -764,6 +784,9 @@ function connectWebSocket() {
           if (message.success) {
             sessionStorage.setItem('isLoggedIn', 'true');
             sessionStorage.setItem('userName', message.userName);
+            if (message.userRoomCode) {
+              sessionStorage.setItem('userRoomCode', message.userRoomCode);
+            }
             
             showToast(`🔑 Authentication successful! Welcome, ${message.userName}.`);
             
@@ -783,6 +806,9 @@ function connectWebSocket() {
             if (userProfileBar) {
               userProfileBar.classList.remove('hidden');
             }
+            
+            // Show My Room badge if user has a reserved room
+            updateMyRoomBadge(message.userRoomCode);
             
             // Go to landing screen
             screenLogin.classList.add('hidden');
@@ -831,7 +857,7 @@ function connectWebSocket() {
           const usersList = document.getElementById('users-list');
           if (usersList && message.users) {
             usersList.innerHTML = '';
-            message.users.forEach(user => {
+            message.users.forEach(({ username, roomCode }) => {
               const li = document.createElement('li');
               li.style.color = '#fff';
               li.style.fontSize = '0.88rem';
@@ -845,19 +871,31 @@ function connectWebSocket() {
               li.style.marginBottom = '0.5rem';
               
               const nameSpan = document.createElement('span');
-              nameSpan.textContent = user;
               nameSpan.style.fontFamily = "'Inter', sans-serif";
+              nameSpan.style.display = 'flex';
+              nameSpan.style.flexDirection = 'column';
+              nameSpan.style.gap = '2px';
+              const nameText = document.createElement('span');
+              nameText.textContent = username;
+              nameSpan.appendChild(nameText);
+              if (roomCode) {
+                const roomText = document.createElement('span');
+                roomText.textContent = `Room: ${roomCode}`;
+                roomText.style.fontSize = '0.72rem';
+                roomText.style.color = 'rgba(212,175,55,0.7)';
+                nameSpan.appendChild(roomText);
+              }
               li.appendChild(nameSpan);
               
               const roleSpan = document.createElement('span');
-              roleSpan.textContent = user === 'Ankor' ? 'Admin' : 'Dealer';
+              roleSpan.textContent = username === 'Ankor' ? 'Admin' : 'Dealer';
               roleSpan.style.fontSize = '0.65rem';
               roleSpan.style.padding = '2px 6px';
               roleSpan.style.borderRadius = '3px';
               roleSpan.style.fontWeight = 'bold';
               roleSpan.style.textTransform = 'uppercase';
               
-              if (user === 'Ankor') {
+              if (username === 'Ankor') {
                 roleSpan.style.background = '#d4af37';
                 roleSpan.style.color = '#000';
                 roleSpan.style.boxShadow = '0 0 5px rgba(212,175,55,0.3)';
@@ -1634,6 +1672,18 @@ function hashCode(str) {
 
 function newSet(arr) {
   return Array.from(new Set(arr));
+}
+
+// Show/hide the "My Room" badge on the landing screen
+function updateMyRoomBadge(roomCode) {
+  const badge = document.getElementById('my-room-badge');
+  if (!badge) return;
+  if (roomCode) {
+    badge.querySelector('#my-room-code').textContent = roomCode;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
 }
 
 function showToast(message) {

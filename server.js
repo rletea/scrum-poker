@@ -48,7 +48,13 @@ async function initDatabase() {
     `);
     console.log('[DbDebug] PostgreSQL table "users" is initialized.');
 
-    // 2. Insert reserved admin credentials if missing
+    // 2. Add room_code column for per-user reserved rooms (safe on existing DBs)
+    await dbPool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS room_code VARCHAR(4) UNIQUE;
+    `);
+    console.log('[DbDebug] PostgreSQL column "room_code" is ensured.');
+
+    // 3. Insert reserved admin credentials if missing
     const adminPassword = process.env.ADMIN_PASSWORD || ['Scrum', '#0726', '@Poker'].join('');
     const adminEmail = process.env.ADMIN_EMAIL || ['robert', '.', 'letea', '@gmail', '.com'].join('');
 
@@ -60,11 +66,28 @@ async function initDatabase() {
 
     // Update existing admin account email if it was previously set to ankor@scrumpoker.org
     await dbPool.query(`
-      UPDATE users 
-      SET email = $1 
+      UPDATE users
+      SET email = $1
       WHERE username = 'Ankor' AND email = 'ankor@scrumpoker.org';
     `, [adminEmail]);
     console.log('[DbDebug] PostgreSQL reserved user database is synchronized.');
+
+    // 4. Backfill room_code for any existing users that don't have one yet
+    const usersWithoutRoom = await dbPool.query(
+      `SELECT username FROM users WHERE room_code IS NULL`
+    );
+    for (const row of usersWithoutRoom.rows) {
+      const code = generateUniqueRoomCode();
+      await dbPool.query(
+        `UPDATE users SET room_code = $1 WHERE username = $2`,
+        [code, row.username]
+      );
+      console.log(`[DbDebug] Backfilled room_code "${code}" for existing user "${row.username}".`);
+    }
+
+    // 5. Load all user room codes into the in-memory reserved rooms set
+    await loadUserReservedRooms();
+
   } catch (err) {
     console.error('[DbDebug] Failed to initialize PostgreSQL database:', err);
     process.exit(1);
@@ -97,7 +120,8 @@ async function findUser(username) {
         username: row.username,
         password: row.password,
         email: row.email,
-        lastActive: row.last_active
+        lastActive: row.last_active,
+        roomCode: row.room_code
       };
     }
     return null;
@@ -110,12 +134,13 @@ async function findUser(username) {
 async function registerUser(username, password, email) {
   const trimmed = username ? username.trim() : '';
   const emailTrim = email ? email.trim() : '';
+  const roomCode = generateUniqueRoomCode();
   try {
     await dbPool.query(
-      'INSERT INTO users (username, password, email, last_active) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)',
-      [trimmed, password, emailTrim]
+      'INSERT INTO users (username, password, email, last_active, room_code) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4)',
+      [trimmed, password, emailTrim, roomCode]
     );
-    return { success: true };
+    return { success: true, roomCode };
   } catch (err) {
     console.error('[DbDebug] registerUser error:', err);
     if (err.code === '23505') {
@@ -161,11 +186,11 @@ async function deleteUser(username) {
 
 async function getRegisteredUsers() {
   try {
-    const res = await dbPool.query('SELECT username FROM users ORDER BY username ASC');
-    return res.rows.map(r => r.username);
+    const res = await dbPool.query('SELECT username, room_code FROM users ORDER BY username ASC');
+    return res.rows.map(r => ({ username: r.username, roomCode: r.room_code }));
   } catch (err) {
     console.error('[DbDebug] getRegisteredUsers error:', err);
-    return ['Ankor'];
+    return [{ username: 'Ankor', roomCode: null }];
   }
 }
 
@@ -228,6 +253,52 @@ const rooms = {
   }
 };
 
+// Set of all reserved room codes: hardcoded + per-user. Never deleted, only reset.
+const HARDCODED_RESERVED = ['MTCS', 'MTPS', 'PRDS'];
+const reservedRoomCodes = new Set(HARDCODED_RESERVED);
+
+function isReservedRoom(code) {
+  return reservedRoomCodes.has(code);
+}
+
+// Load all user room codes from DB and ensure they exist in the in-memory rooms map
+async function loadUserReservedRooms() {
+  try {
+    const res = await dbPool.query(`SELECT username, room_code FROM users WHERE room_code IS NOT NULL`);
+    for (const row of res.rows) {
+      const code = row.room_code;
+      reservedRoomCodes.add(code);
+      if (!rooms[code]) {
+        rooms[code] = {
+          code,
+          ticketName: 'Story Title',
+          ticketDesc: 'Story description goes here. Double click to edit.',
+          deckType: 'fibonacci',
+          revealed: false,
+          players: {},
+          lastActivity: Date.now()
+        };
+      }
+    }
+    console.log(`[Rooms] Reserved room codes loaded: ${[...reservedRoomCodes].join(', ')}`);
+  } catch (err) {
+    console.error('[Rooms] Failed to load user reserved rooms:', err);
+  }
+}
+
+// Generate a unique room code that doesn't clash with existing rooms OR reserved codes
+function generateUniqueRoomCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let code = '';
+  do {
+    code = '';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+  } while (rooms[code] || reservedRoomCodes.has(code));
+  return code;
+}
+
 // Helper to broadcast room state to all clients in that room
 function broadcastRoomState(roomCode) {
   const room = rooms[roomCode];
@@ -246,16 +317,9 @@ function broadcastRoomState(roomCode) {
   });
 }
 
-// Helper to generate a random 4-letter room code
+// Helper to generate a random 4-letter room code (for ad-hoc rooms only)
 function generateRoomCode() {
-  let code = '';
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  // Ensure uniqueness
-  if (rooms[code]) return generateRoomCode();
-  return code;
+  return generateUniqueRoomCode();
 }
 
 wss.on('connection', (ws) => {
@@ -443,7 +507,20 @@ wss.on('connection', (ws) => {
             } else {
               if (userRecord.password === pass) {
                 console.log(`[AuthDebug] Login successful for user "${trimmedUser}".`);
-                ws.send(JSON.stringify({ type: 'loginResult', success: true, userName: userRecord.username }));
+                // Ensure user's reserved room exists in memory (e.g. after server restart)
+                if (userRecord.roomCode && !rooms[userRecord.roomCode]) {
+                  reservedRoomCodes.add(userRecord.roomCode);
+                  rooms[userRecord.roomCode] = {
+                    code: userRecord.roomCode,
+                    ticketName: 'Story Title',
+                    ticketDesc: 'Story description goes here. Double click to edit.',
+                    deckType: 'fibonacci',
+                    revealed: false,
+                    players: {},
+                    lastActivity: Date.now()
+                  };
+                }
+                ws.send(JSON.stringify({ type: 'loginResult', success: true, userName: userRecord.username, userRoomCode: userRecord.roomCode }));
                 updateUserActivity(trimmedUser);
                 logActivity(trimmedUser, 'Dealer Logged In', null);
               } else {
@@ -489,7 +566,19 @@ wss.on('connection', (ws) => {
             if (!result.success) {
               ws.send(JSON.stringify({ type: 'registerResult', success: false, message: result.message }));
             } else {
-              logActivity(trimmedUser, `New User Registered (${trimmedEmail})`, null);
+              // Add new user's room to reserved set and in-memory rooms
+              const newRoomCode = result.roomCode;
+              reservedRoomCodes.add(newRoomCode);
+              rooms[newRoomCode] = {
+                code: newRoomCode,
+                ticketName: 'Story Title',
+                ticketDesc: 'Story description goes here. Double click to edit.',
+                deckType: 'fibonacci',
+                revealed: false,
+                players: {},
+                lastActivity: Date.now()
+              };
+              logActivity(trimmedUser, `New User Registered (${trimmedEmail}) — Room: ${newRoomCode}`, null);
               ws.send(JSON.stringify({ type: 'registerResult', success: true, message: 'Registration successful! Please log in.' }));
             }
           });
@@ -545,8 +634,15 @@ wss.on('connection', (ws) => {
             if (!userRecord) {
               ws.send(JSON.stringify({ type: 'deleteAccountResult', success: false, message: 'User does not exist.' }));
             } else {
+              const userRoom = userRecord.roomCode;
               deleteUser(trimmedUser).then((result) => {
                 if (result.success) {
+                  // Remove user's reserved room from memory and reserved set
+                  if (userRoom) {
+                    reservedRoomCodes.delete(userRoom);
+                    delete rooms[userRoom];
+                    console.log(`[Rooms] Deleted reserved room ${userRoom} for deleted user ${trimmedUser}.`);
+                  }
                   ws.send(JSON.stringify({ type: 'deleteAccountResult', success: true }));
                   logActivity(trimmedUser, 'Deleted Account permanently', null);
                 } else {
@@ -607,9 +703,8 @@ function handleDisconnect(ws) {
       logActivity(player.name, 'Left room', roomCode);
       
       // If room is completely empty, delete it (unless it is a reserved room)
-      const reservedRooms = ['MTCS', 'MTPS', 'PRDS'];
       if (Object.keys(rooms[roomCode].players).length === 0) {
-        if (reservedRooms.includes(roomCode)) {
+        if (isReservedRoom(roomCode)) {
           rooms[roomCode].revealed = false;
           rooms[roomCode].ticketName = 'Story Title';
           rooms[roomCode].ticketDesc = 'Story description goes here. Double click to edit.';
@@ -668,8 +763,7 @@ const inactivityInterval = setInterval(() => {
         }
       });
 
-      const reservedRooms = ['MTCS', 'MTPS', 'PRDS'];
-      if (reservedRooms.includes(roomCode)) {
+      if (isReservedRoom(roomCode)) {
         rooms[roomCode].players = {};
         rooms[roomCode].revealed = false;
         rooms[roomCode].ticketName = 'Story Title';
