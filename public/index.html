@@ -100,16 +100,6 @@
           </div>
         </header>
 
-        <!-- My Room Badge (shown to logged-in users with a reserved room) -->
-        <div id="my-room-badge" class="hidden" style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:0.6rem 1rem; margin-bottom:1rem; width:100%; box-sizing:border-box;">
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <span style="font-size:1rem;">🏠</span>
-            <span style="font-size:0.85rem; color:var(--text-secondary);">Your reserved room:</span>
-            <strong id="my-room-code" style="font-family:'Outfit',sans-serif; font-size:1rem; letter-spacing:0.12em; color:#d4af37;">----</strong>
-          </div>
-          <button id="btn-enter-my-room" class="btn btn-primary btn-small btn-glow" style="padding:0.35rem 0.9rem; font-size:0.82rem; margin:0;">Enter</button>
-        </div>
-
         <div class="tabs-control">
           <button id="tab-create" class="tab-btn active">Create Room</button>
           <button id="tab-join" class="tab-btn">Join Room</button>
@@ -161,7 +151,7 @@
             <input type="text" id="join-name" placeholder="e.g. Sarah" required autocomplete="off">
           </div>
           <div class="input-group">
-            <label for="join-code">Room Code</label>
+            <label for="join-code">Room Code <span id="join-code-hint" style="font-weight:400; font-size:0.78rem; color:rgba(212,175,55,0.8);"></span></label>
             <input type="text" id="join-code" placeholder="4-Letter Code (e.g. ABCD)" required autocomplete="off" max-length="4" style="text-transform: uppercase;">
           </div>
           <div class="input-group checkbox-group">

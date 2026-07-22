@@ -149,20 +149,6 @@ window.addEventListener('DOMContentLoaded', () => {
   setupBroadcastHeartbeat();
   setupUnloadHandlers();
 
-  // My Room — Enter button
-  const btnEnterMyRoom = document.getElementById('btn-enter-my-room');
-  if (btnEnterMyRoom) {
-    btnEnterMyRoom.addEventListener('click', () => {
-      const roomCode = sessionStorage.getItem('userRoomCode');
-      const name = sessionStorage.getItem('userName') || '';
-      const role = sessionStorage.getItem('userRole') || 'estimator';
-      if (!roomCode) return;
-      localName = name;
-      localRole = role;
-      joinRoom(roomCode, name, role, null);
-    });
-  }
-  
   // Change Password Modal triggers
   if (btnOpenChangePw && changePwModal) {
     btnOpenChangePw.addEventListener('click', () => {
@@ -205,7 +191,7 @@ window.addEventListener('DOMContentLoaded', () => {
       sessionStorage.removeItem('userName');
       sessionStorage.removeItem('userRole');
       sessionStorage.removeItem('userRoomCode');
-      updateMyRoomBadge(null);
+      applyUserRoomCode(null);
       updateCreateButtonState();
       
       screenLanding.classList.add('hidden');
@@ -323,7 +309,12 @@ function setupLandingTabs() {
   });
 
   // Watch room code input to disable/enable Create Room button
+  // Also clear the reserved-room hint if the user edits the value
   joinCodeInput.addEventListener('input', () => {
+    const hint = document.getElementById('join-code-hint');
+    if (hint && joinCodeInput.value.toUpperCase() !== (joinCodeInput.dataset.reservedCode || '')) {
+      hint.textContent = '';
+    }
     updateCreateButtonState();
   });
 }
@@ -591,9 +582,9 @@ function checkAuthAndHash() {
         if (dealerDeleteAccountContainer) dealerDeleteAccountContainer.classList.remove('hidden');
       }
       
-      // Restore My Room badge from sessionStorage on page reload
+      // Pre-fill reserved room code on page reload
       const savedRoomCode = sessionStorage.getItem('userRoomCode');
-      updateMyRoomBadge(savedRoomCode);
+      applyUserRoomCode(savedRoomCode);
     } else {
       screenLogin.classList.remove('hidden');
       screenLanding.classList.add('hidden');
@@ -807,8 +798,8 @@ function connectWebSocket() {
               userProfileBar.classList.remove('hidden');
             }
             
-            // Show My Room badge if user has a reserved room
-            updateMyRoomBadge(message.userRoomCode);
+            // Pre-fill reserved room code in Join tab
+            applyUserRoomCode(message.userRoomCode);
             
             // Go to landing screen
             screenLogin.classList.add('hidden');
@@ -1674,16 +1665,27 @@ function newSet(arr) {
   return Array.from(new Set(arr));
 }
 
-// Show/hide the "My Room" badge on the landing screen
-function updateMyRoomBadge(roomCode) {
-  const badge = document.getElementById('my-room-badge');
-  if (!badge) return;
+// Pre-fill the Join Room tab with the user's reserved room code
+function applyUserRoomCode(roomCode) {
+  const hint = document.getElementById('join-code-hint');
   if (roomCode) {
-    badge.querySelector('#my-room-code').textContent = roomCode;
-    badge.classList.remove('hidden');
+    // Pre-fill the code input and switch to Join tab
+    joinCodeInput.value = roomCode;
+    if (hint) hint.textContent = '(this is your reserved room)';
+    // Switch to Join tab so the user sees it
+    tabJoin.click();
+    // Trigger create-button state update (disables Create Room while code is filled)
+    updateCreateButtonState();
   } else {
-    badge.classList.add('hidden');
+    // Clear pre-fill
+    if (joinCodeInput.value === joinCodeInput.dataset.reservedCode) {
+      joinCodeInput.value = '';
+    }
+    if (hint) hint.textContent = '';
+    updateCreateButtonState();
   }
+  // Store the reserved code as a data attribute so we can detect user edits
+  joinCodeInput.dataset.reservedCode = roomCode || '';
 }
 
 function showToast(message) {
