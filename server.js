@@ -456,11 +456,22 @@ wss.on('connection', (ws) => {
           const { ticketName, ticketDesc } = message.data;
           const { roomCode } = ws;
           if (roomCode && rooms[roomCode]) {
+            const wasRevealed = rooms[roomCode].revealed;
             rooms[roomCode].ticketName = ticketName;
             rooms[roomCode].ticketDesc = ticketDesc;
             rooms[roomCode].lastActivity = Date.now();
-            console.log(`Ticket updated in room ${roomCode}: ${ticketName}`);
-            logActivity('System', `Updated ticket title to "${ticketName}"`, roomCode);
+            // If cards were revealed, saving a new story title triggers a round reset
+            if (wasRevealed) {
+              rooms[roomCode].revealed = false;
+              Object.keys(rooms[roomCode].players).forEach((pId) => {
+                rooms[roomCode].players[pId].vote = null;
+              });
+              console.log(`Ticket updated and round auto-reset in room ${roomCode}: ${ticketName}`);
+              logActivity('System', `Updated ticket to "${ticketName}" — round auto-reset`, roomCode);
+            } else {
+              console.log(`Ticket updated in room ${roomCode}: ${ticketName}`);
+              logActivity('System', `Updated ticket title to "${ticketName}"`, roomCode);
+            }
             broadcastRoomState(roomCode);
           }
           break;
