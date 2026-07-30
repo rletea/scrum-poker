@@ -753,41 +753,43 @@ const inactivityInterval = setInterval(() => {
   const now = Date.now();
   Object.keys(rooms).forEach((roomCode) => {
     const room = rooms[roomCode];
-    const hasActiveClients = [...wss.clients].some(
-      (client) => client.readyState === WebSocket.OPEN && client.roomCode === roomCode
-    );
-    if (!hasActiveClients && now - room.lastActivity > INACTIVITY_TIMEOUT) {
-      console.log(`Room ${roomCode} inactive for 1.5 hours. Cleaning up.`);
-      logActivity('System', 'Room closed due to inactivity', roomCode);
-      
-      const kickMessage = JSON.stringify({
-        type: 'kicked',
-        message: 'This room has been closed due to 1.5 hours of inactivity.'
-      });
+    if (now - room.lastActivity <= INACTIVITY_TIMEOUT) return;
 
-      wss.clients.forEach((client) => {
-        if (client.roomCode === roomCode) {
-          try {
-            client.send(kickMessage);
-          } catch (e) {
-            console.error('Failed to send kick to socket:', e);
-          }
-          client.roomCode = null;
-          client.userId = null;
+    // Room has been open > 1.5h with no activity — check if all players are idle (no votes cast)
+    const players = Object.values(room.players);
+    const allPlayersIdle = players.length === 0 || players.every((p) => p.vote === null);
+    if (!allPlayersIdle) return;
+
+    console.log(`Room ${roomCode} inactive for 1.5 hours. Cleaning up.`);
+    logActivity('System', 'Room closed due to inactivity', roomCode);
+
+    const kickMessage = JSON.stringify({
+      type: 'kicked',
+      message: 'This room has been closed due to 1.5 hours of inactivity.'
+    });
+
+    wss.clients.forEach((client) => {
+      if (client.roomCode === roomCode) {
+        try {
+          client.send(kickMessage);
+        } catch (e) {
+          console.error('Failed to send kick to socket:', e);
         }
-      });
-
-      if (isReservedRoom(roomCode)) {
-        rooms[roomCode].players = {};
-        rooms[roomCode].revealed = false;
-        rooms[roomCode].ticketName = 'Story Title';
-        rooms[roomCode].ticketDesc = 'Story description goes here. Double click to edit.';
-        rooms[roomCode].lastActivity = now;
-        console.log(`Reserved room ${roomCode} reset due to inactivity.`);
-      } else {
-        delete rooms[roomCode];
-        console.log(`Deleted inactive room ${roomCode}`);
+        client.roomCode = null;
+        client.userId = null;
       }
+    });
+
+    if (isReservedRoom(roomCode)) {
+      rooms[roomCode].players = {};
+      rooms[roomCode].revealed = false;
+      rooms[roomCode].ticketName = 'Story Title';
+      rooms[roomCode].ticketDesc = 'Story description goes here. Double click to edit.';
+      rooms[roomCode].lastActivity = now;
+      console.log(`Reserved room ${roomCode} reset due to inactivity.`);
+    } else {
+      delete rooms[roomCode];
+      console.log(`Deleted inactive room ${roomCode}`);
     }
   });
 }, 60000);
