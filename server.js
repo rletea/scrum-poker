@@ -753,7 +753,10 @@ const inactivityInterval = setInterval(() => {
   const now = Date.now();
   Object.keys(rooms).forEach((roomCode) => {
     const room = rooms[roomCode];
-    if (now - room.lastActivity > INACTIVITY_TIMEOUT) {
+    const hasActiveClients = [...wss.clients].some(
+      (client) => client.readyState === WebSocket.OPEN && client.roomCode === roomCode
+    );
+    if (!hasActiveClients && now - room.lastActivity > INACTIVITY_TIMEOUT) {
       console.log(`Room ${roomCode} inactive for 1.5 hours. Cleaning up.`);
       logActivity('System', 'Room closed due to inactivity', roomCode);
       
