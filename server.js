@@ -495,6 +495,37 @@ wss.on('connection', (ws) => {
           break;
         }
 
+        case 'changeRole': {
+          const { targetPlayerId, newRole } = message.data || {};
+          const { roomCode, userId } = ws;
+          if (!roomCode || !rooms[roomCode]) break;
+
+          const room = rooms[roomCode];
+          const requester = room.players[userId];
+          const target = room.players[targetPlayerId];
+
+          if (newRole !== 'estimator' && newRole !== 'spectator') break;
+          if (!requester || !target) break;
+
+          // Only a SPECTATOR is allowed to correct roles
+          if (requester.role !== 'spectator') {
+            ws.send(JSON.stringify({ type: 'error', message: 'Only a Spectator can change participant roles.' }));
+            break;
+          }
+          if (target.role === newRole) break;
+
+          const oldRole = target.role;
+          target.role = newRole;
+          // Spectators do not vote — clear any existing vote when switching role
+          target.vote = null;
+          room.lastActivity = Date.now();
+
+          console.log(`Role of ${target.name} changed ${oldRole} -> ${newRole} by ${requester.name} in room ${roomCode}`);
+          logActivity(requester.name, `Changed role of "${target.name}" from ${oldRole} to ${newRole}`, roomCode);
+          broadcastRoomState(roomCode);
+          break;
+        }
+
         case 'login': {
           const { user, pass } = message.data;
           const trimmedUser = user ? user.trim() : '';

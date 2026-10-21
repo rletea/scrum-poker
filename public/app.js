@@ -1148,6 +1148,19 @@ function handleLocalAction(type, data) {
       break;
     }
 
+    case 'changeRole': {
+      if (!roomState) return;
+      const me = roomState.players[localUserId];
+      const target = roomState.players[data.targetPlayerId];
+      if (!me || !target || me.role !== 'spectator') return;
+      target.role = data.newRole;
+      target.vote = null;
+      roomState.timestamp = Date.now();
+      broadcastLocalState();
+      updateGameUI();
+      break;
+    }
+
     case 'addMockPlayers': {
       if (!roomState) return;
       const mockNames = ['Alex (Dev)', 'Taylor (QA)', 'Jordan (UX)'];
@@ -1403,6 +1416,17 @@ function renderParticipants() {
   players.forEach(p => {
     const row = document.createElement('div');
     row.className = 'player-row';
+
+    // A Spectator can click any participant to toggle Estimator <-> Spectator
+    if (localRole === 'spectator') {
+      const nextRole = p.role === 'estimator' ? 'spectator' : 'estimator';
+      row.classList.add('role-editable');
+      row.title = `Click to change ${p.name} to ${nextRole === 'spectator' ? 'Spectator' : 'Estimator'}`;
+      row.addEventListener('click', () => {
+        sendMsg('changeRole', { targetPlayerId: p.id, newRole: nextRole });
+        showToast(`🔁 ${p.name} → ${nextRole === 'spectator' ? 'Spectator' : 'Estimator'}`);
+      });
+    }
 
     const isMe = p.id === localUserId;
     const nameText = isMe ? `${p.name} <span class="self-tag">You</span>` : p.name;

@@ -961,6 +961,17 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focu
 .player-row:hover {
   background: rgba(255, 255, 255, 0.05);
 }
+/* Spectators can click a participant to switch Estimator <-> Spectator */
+.player-row.role-editable {
+  cursor: pointer;
+}
+
+.player-row.role-editable:hover {
+  border-color: rgba(212, 175, 55, 0.6);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+
 
 .player-info {
   display: flex;
