@@ -1417,14 +1417,17 @@ function renderParticipants() {
     const row = document.createElement('div');
     row.className = 'player-row';
 
-    // A Spectator can click any participant to toggle Estimator <-> Spectator
+    // A Spectator can double-click any participant to toggle Estimator <-> Spectator (with confirmation)
     if (localRole === 'spectator') {
       const nextRole = p.role === 'estimator' ? 'spectator' : 'estimator';
+      const nextRoleLabel = nextRole === 'spectator' ? 'Spectator' : 'Estimator';
       row.classList.add('role-editable');
-      row.title = `Click to change ${p.name} to ${nextRole === 'spectator' ? 'Spectator' : 'Estimator'}`;
-      row.addEventListener('click', () => {
+      row.title = `Double-click to change ${p.name} to ${nextRoleLabel}`;
+      row.addEventListener('dblclick', () => {
+        const confirmed = confirm(`Change ${p.name} to ${nextRoleLabel}?`);
+        if (!confirmed) return;
         sendMsg('changeRole', { targetPlayerId: p.id, newRole: nextRole });
-        showToast(`🔁 ${p.name} → ${nextRole === 'spectator' ? 'Spectator' : 'Estimator'}`);
+        showToast(`🔁 ${p.name} → ${nextRoleLabel}`);
       });
     }
 
