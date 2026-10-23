@@ -514,6 +514,15 @@ wss.on('connection', (ws) => {
           }
           if (target.role === newRole) break;
 
+          // Rule: the last remaining Spectator cannot be changed to Estimator
+          if (target.role === 'spectator' && newRole === 'estimator') {
+            const spectatorCount = Object.values(room.players).filter(p => p.role === 'spectator').length;
+            if (spectatorCount <= 1) {
+              ws.send(JSON.stringify({ type: 'error', message: 'The last remaining Spectator cannot be changed to Estimator.' }));
+              break;
+            }
+          }
+
           const oldRole = target.role;
           target.role = newRole;
           // Spectators do not vote — clear any existing vote when switching role

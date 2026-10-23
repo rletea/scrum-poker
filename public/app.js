@@ -1153,6 +1153,10 @@ function handleLocalAction(type, data) {
       const me = roomState.players[localUserId];
       const target = roomState.players[data.targetPlayerId];
       if (!me || !target || me.role !== 'spectator') return;
+      if (target.role === 'spectator' && data.newRole === 'estimator') {
+        const spectatorCount = Object.values(roomState.players).filter(p => p.role === 'spectator').length;
+        if (spectatorCount <= 1) return;
+      }
       target.role = data.newRole;
       target.vote = null;
       roomState.timestamp = Date.now();
@@ -1424,6 +1428,14 @@ function renderParticipants() {
       row.classList.add('role-editable');
       row.title = `Double-click to change ${p.name} to ${nextRoleLabel}`;
       row.addEventListener('dblclick', () => {
+        // Rule: the last remaining Spectator cannot become an Estimator
+        if (p.role === 'spectator' && nextRole === 'estimator') {
+          const spectatorCount = players.filter(x => x.role === 'spectator').length;
+          if (spectatorCount <= 1) {
+            showToast('⚠️ The last remaining Spectator cannot be changed to Estimator.');
+            return;
+          }
+        }
         const confirmed = confirm(`Change ${p.name} to ${nextRoleLabel}?`);
         if (!confirmed) return;
         sendMsg('changeRole', { targetPlayerId: p.id, newRole: nextRole });
